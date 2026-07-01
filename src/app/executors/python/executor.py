@@ -151,6 +151,8 @@ class PythonExecutor(BaseExecutor):
 
     def _parse_pytest_output(self, logs: str) -> dict:
         """Parse pytest output to extract comprehensive test results"""
+        import re
+
         lines = logs.split("\n")
         test_results = []
         total_tests = 0
@@ -170,46 +172,70 @@ class PythonExecutor(BaseExecutor):
                 "error": syntax_error_match
             }
 
-        # Parse test results line by line
-        current_test = None
-        in_failure_section = False
-
-        for i, line in enumerate(lines):
-            # Test result line (e.g., "test_solution.py::test_name PASSED")
-            if " PASSED" in line or " FAILED" in line:
-                if current_test:
-                    test_results.append(current_test)
-
-                parts = line.split("::")
-                if len(parts) >= 2:
-                    test_name = parts[-1].split()[0]
-                    status = "Passed" if "PASSED" in line else "Failed"
-                    current_test = {
-                        "name": test_name,
-                        "status": status,
-                        "error": None
-                    }
-                    total_tests += 1
-                    if status == "Passed":
-                        passed_tests += 1
-                    else:
-                        failed_tests += 1
-
-            # Capture failure details (error message after the test line)
-            elif current_test and current_test["status"] == "Failed":
-                if line.strip() and not line.startswith("="):
-                    # Extract assertion or error message
-                    if "AssertionError" in line or "assert" in line or "Error" in line:
-                        if not current_test.get("error"):
-                            current_test["error"] = line.strip()[:200]
-
-        # Append last test if exists
-        if current_test:
-            test_results.append(current_test)
-
-        # Parse summary line for final counts
+        # First pass: collect test results
+        test_map = {}
         for line in lines:
-            if "passed" in line.lower() and "==" in line:
+            # Match test result lines: "test_solution.py::test_name PASSED/FAILED"
+            test_match = re.search(r'(test_\w+\.py)::(test_\w+)\s+(PASSED|FAILED)', line)
+            if test_match:
+                test_name = test_match.group(2)
+                status = "Passed" if test_match.group(3) == "PASSED" else "Failed"
+                test_map[test_name] = {
+                    "name": test_name,
+                    "status": status,
+                    "failure_lines": []
+                }
+                total_tests += 1
+                if status == "Passed":
+                    passed_tests += 1
+                else:
+                    failed_tests += 1
+
+        # Second pass: collect failure details from FAILURES section
+        current_failed_test = None
+        in_failures_section = False
+
+        for line in lines:
+            if "=== FAILURES ===" in line:
+                in_failures_section = True
+                continue
+
+            if in_failures_section:
+                # Look for test name in failure header (surrounded by underscores)
+                # Format: "_________________________________ test_name _________________________________"
+                test_match = re.search(r'test_\w+', line)
+                if test_match and line.count("_") > 5:
+                    current_failed_test = test_match.group(0)
+
+                # Collect error lines for the current failed test
+                if current_failed_test and current_failed_test in test_map:
+                    if line.startswith("E   "):
+                        test_map[current_failed_test]["failure_lines"].append(line[4:].strip())
+
+        # Build test results with parsed failure details
+        for test_name in test_map:
+            test_data = test_map[test_name]
+            test_result = {
+                "name": test_name,
+                "status": test_data["status"],
+                "expected": None,
+                "actual": None,
+                "error": None,
+                "stackTrace": None
+            }
+
+            if test_data["status"] == "Failed" and test_data["failure_lines"]:
+                failure_details = self._parse_failure_output(test_data["failure_lines"])
+                # Update only fields that were found
+                for key in ["error", "expected", "actual", "stackTrace"]:
+                    if key in failure_details:
+                        test_result[key] = failure_details[key]
+
+            test_results.append(test_result)
+
+        # Parse summary line for accurate counts
+        for line in lines:
+            if "passed" in line.lower() and ("failed" in line.lower() or "==" in line):
                 counts = self._parse_summary_line(line)
                 if counts:
                     passed_tests = counts.get("passed", passed_tests)
@@ -219,7 +245,6 @@ class PythonExecutor(BaseExecutor):
 
         # Handle edge case: no tests found
         if total_tests == 0:
-            # Check if there's an error in the output
             if "ERROR" in logs or "error" in logs.lower():
                 error_info = {
                     "type": "ExecutionError",
@@ -255,6 +280,50 @@ class PythonExecutor(BaseExecutor):
             return ErrorFormatter.format_docker_error(logs)
 
         return None
+
+    def _parse_failure_output(self, failure_lines: list) -> dict:
+        """Extract human-readable error details from pytest error output lines"""
+        import re
+
+        result = {}
+
+        if not failure_lines:
+            return result
+
+        # Process each error line from pytest output (lines starting with "E ")
+        for line in failure_lines:
+            # Look for assertion failures: "assert False == True"
+            if "assert" in line and "==" in line:
+                result["error"] = line
+                # Parse expected vs actual from assertion
+                parts = line.split("==")
+                if len(parts) == 2:
+                    result["actual"] = parts[0].replace("assert", "").strip()
+                    result["expected"] = parts[1].strip()
+
+            # Look for where clause: "+ where False = is_even(3)"
+            elif "where" in line:
+                # Extract the comparison info: "where False = is_even(3)"
+                match = re.search(r'where\s+(\S+)\s*=\s*(.+)', line)
+                if match:
+                    actual_val = match.group(1)
+                    function_call = match.group(2)
+                    if "actual" not in result:
+                        result["actual"] = actual_val
+                    # Add more context to error message
+                    if "error" not in result:
+                        result["error"] = f"Assertion failed: actual={actual_val}, from {function_call}"
+                    result["stackTrace"] = line
+
+            # Collect other error information (AssertionError, etc)
+            elif line and "error" not in result:
+                result["error"] = line
+
+        # Ensure we have a primary error message
+        if not result.get("error") and failure_lines:
+            result["error"] = " ".join(failure_lines)
+
+        return result
 
     def _parse_summary_line(self, line: str) -> dict | None:
         """Parse pytest summary line (e.g., '4 passed in 0.12s')"""

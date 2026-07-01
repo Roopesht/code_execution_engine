@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(EXECUTOR_API_KEY=test_key python3)"
+      "Bash(EXECUTOR_API_KEY=test_key python3)",
+      "Bash(python -c ' *)",
+      "Bash(EXECUTOR_API_KEY=\"*\" python -m pytest tests/test_integration.py -q)"
     ]
   }
 }

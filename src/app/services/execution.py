@@ -74,7 +74,10 @@ async def execute_code(request: ExecutionRequest) -> ExecutionResponse:
                 TestResult(
                     name=t.get("name", ""),
                     status=t.get("status", "Failed"),
-                    error=t.get("error")
+                    expected=t.get("expected"),
+                    actual=t.get("actual"),
+                    error=t.get("error"),
+                    stackTrace=t.get("stackTrace")
                 )
                 for t in results.get("tests", [])
             ],
