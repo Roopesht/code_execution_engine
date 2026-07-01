@@ -1,10 +1,18 @@
+# Project Configuration
 
-All the  story specifications please write them inside folder @docs/delivery/stories
+## Documentation
+- **Story Specifications:** Write all stories in `@docs/delivery/stories/`
+- **Implementation Decisions:** Record ALL decisions (architecture, tech choices, trade-offs) in `@docs/delivery/IMPLEMENTATION_DECISIONS.md`
+- **Implementation Guide:** Use `@docs/delivery/QUICK_REFERENCE.md` as the authoritative reference—do not guess or hallucinate
+- **Code Patterns:** Copy-paste from `@docs/delivery/code_examples/` (verified, production-ready)
 
-Create any temporary files (which are created for your reference) or interim report files in to the folder {project_folder}/temp. Create this folder if does not exists.
-Write all the status updates in the folder {project_folder}/temp/status_updates. Create this folder if does not exists.
+## Workflow
+- Story specs are individual markdown files with back-links to scope matrix
+- Changes made silently—no explanations unless asked
+- All changes are version-controlled; revert as needed
 
-Please follow the @.claude/claude_code_workflow.md
-Pleaes make changes silently without asking the permission, as I have Version control I will validate all the changes and I can revert if needed. 
-Please do not explain the changes you are making, just make the changes. I will ask questions if I need clarification.
+## Temporary Files
+- Interim reports: `{project_folder}/temp/`
+- Status updates: `{project_folder}/temp/status_updates/`
+- Create directories as needed (no permission required)
 
