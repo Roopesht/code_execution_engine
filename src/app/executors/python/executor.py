@@ -149,43 +149,81 @@ class PythonExecutor(BaseExecutor):
             }))
 
     def _parse_pytest_output(self, logs: str) -> dict:
-        """Parse pytest output to extract test results"""
+        """Parse pytest output to extract comprehensive test results"""
         lines = logs.split("\n")
         test_results = []
         total_tests = 0
         passed_tests = 0
         failed_tests = 0
+        error_info = None
 
-        for line in lines:
-            # Parse test results (e.g., "test_name PASSED", "test_name FAILED")
+        # Check for syntax/import errors in output
+        syntax_error_match = self._extract_error(logs)
+        if syntax_error_match:
+            return {
+                "passed": False,
+                "totalTests": 0,
+                "passedTests": 0,
+                "failedTests": 0,
+                "tests": [],
+                "error": syntax_error_match
+            }
+
+        # Parse test results line by line
+        current_test = None
+        in_failure_section = False
+
+        for i, line in enumerate(lines):
+            # Test result line (e.g., "test_solution.py::test_name PASSED")
             if " PASSED" in line or " FAILED" in line:
+                if current_test:
+                    test_results.append(current_test)
+
                 parts = line.split("::")
                 if len(parts) >= 2:
                     test_name = parts[-1].split()[0]
                     status = "Passed" if "PASSED" in line else "Failed"
-                    test_results.append({
+                    current_test = {
                         "name": test_name,
-                        "status": status
-                    })
+                        "status": status,
+                        "error": None
+                    }
                     total_tests += 1
                     if status == "Passed":
                         passed_tests += 1
                     else:
                         failed_tests += 1
 
-        # Parse summary line (e.g., "5 passed in 0.25s")
+            # Capture failure details (error message after the test line)
+            elif current_test and current_test["status"] == "Failed":
+                if line.strip() and not line.startswith("="):
+                    # Extract assertion or error message
+                    if "AssertionError" in line or "assert" in line or "Error" in line:
+                        if not current_test.get("error"):
+                            current_test["error"] = line.strip()[:200]
+
+        # Append last test if exists
+        if current_test:
+            test_results.append(current_test)
+
+        # Parse summary line for final counts
         for line in lines:
-            if "passed" in line and "==" in line:
-                if "failed" in line:
-                    # Parse "X failed, Y passed"
-                    parts = line.split()
-                    for i, part in enumerate(parts):
-                        if part == "failed,":
-                            failed_tests = int(parts[i-1])
-                        if part == "passed":
-                            passed_tests = int(parts[i-1])
+            if "passed" in line.lower() and "==" in line:
+                counts = self._parse_summary_line(line)
+                if counts:
+                    passed_tests = counts.get("passed", passed_tests)
+                    failed_tests = counts.get("failed", failed_tests)
                     total_tests = passed_tests + failed_tests
                 break
+
+        # Handle edge case: no tests found
+        if total_tests == 0:
+            # Check if there's an error in the output
+            if "ERROR" in logs or "error" in logs.lower():
+                error_info = {
+                    "type": "ExecutionError",
+                    "message": "No tests found or execution error"
+                }
 
         return {
             "passed": failed_tests == 0 and total_tests > 0,
@@ -193,8 +231,59 @@ class PythonExecutor(BaseExecutor):
             "passedTests": passed_tests,
             "failedTests": failed_tests,
             "tests": test_results,
-            "error": None if failed_tests == 0 else {
-                "type": "TestFailure",
-                "message": f"{failed_tests} test(s) failed"
-            }
+            "error": error_info if total_tests == 0 else (
+                {
+                    "type": "TestFailure",
+                    "message": f"{failed_tests} test(s) failed"
+                } if failed_tests > 0 else None
+            )
         }
+
+    def _extract_error(self, logs: str) -> dict | None:
+        """Extract syntax/import errors from pytest output"""
+        if "SyntaxError" in logs:
+            lines = logs.split("\n")
+            for i, line in enumerate(lines):
+                if "SyntaxError" in line:
+                    return {
+                        "type": "SyntaxError",
+                        "message": line.strip(),
+                        "line": None
+                    }
+
+        if "ImportError" in logs or "ModuleNotFoundError" in logs:
+            lines = logs.split("\n")
+            for i, line in enumerate(lines):
+                if "Error" in line and ("import" in line.lower() or "module" in line.lower()):
+                    return {
+                        "type": "ImportError",
+                        "message": line.strip(),
+                        "line": None
+                    }
+
+        if "ERRORS" in logs or "ERROR" in logs:
+            lines = logs.split("\n")
+            for i, line in enumerate(lines):
+                if "ERROR" in line and "test" in line.lower():
+                    return {
+                        "type": "ExecutionError",
+                        "message": line.strip(),
+                        "line": None
+                    }
+
+        return None
+
+    def _parse_summary_line(self, line: str) -> dict | None:
+        """Parse pytest summary line (e.g., '4 passed in 0.12s')"""
+        import re
+
+        passed_match = re.search(r'(\d+)\s+passed', line)
+        failed_match = re.search(r'(\d+)\s+failed', line)
+
+        result = {}
+        if passed_match:
+            result["passed"] = int(passed_match.group(1))
+        if failed_match:
+            result["failed"] = int(failed_match.group(1))
+
+        return result if result else None

@@ -66,14 +66,15 @@ async def execute_code(request: ExecutionRequest) -> ExecutionResponse:
             totalTests=results.get("totalTests", 0),
             passedTests=results.get("passedTests", 0),
             failedTests=results.get("failedTests", 0),
-            executionTime=execution_result.get("execution_time", 0.0),
+            executionTime=round(execution_result.get("execution_time", 0.0), 2),
             memory=0,  # TODO: Get from Docker stats
             stdout=execution_result.get("logs", ""),
             stderr="",
             tests=[
                 TestResult(
                     name=t.get("name", ""),
-                    status=t.get("status", "Failed")
+                    status=t.get("status", "Failed"),
+                    error=t.get("error")
                 )
                 for t in results.get("tests", [])
             ],
