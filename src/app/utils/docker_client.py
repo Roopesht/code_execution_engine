@@ -29,13 +29,12 @@ class DockerExecutor:
                     image,
                     command,
                     volumes={workspace: {"bind": "/workspace", "mode": "rw"}},
-                    memory=512 * 1024 * 1024,
-                    cpus=0.5,
+                    mem_limit="512m",
+                    nano_cpus=int(0.5 * 1e9),
                     network_disabled=True,
-                    remove=True,
+                    remove=False,
                     stdout=True,
-                    stderr=True,
-                    timeout=timeout
+                    stderr=True
                 )
             )
             return container

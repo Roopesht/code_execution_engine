@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(EXECUTOR_API_KEY=test_key python3)"
+    ]
+  }
+}

@@ -4,7 +4,8 @@ from fastapi.responses import JSONResponse
 from .utils.logger import get_logger
 from .utils.config import Config
 from .utils.auth import validate_api_key
-from .models import ExecutionRequest, ExecutionResponse, TestResult
+from .models import ExecutionRequest, ExecutionResponse
+from .services.execution import execute_code
 
 Config.validate()
 
@@ -42,22 +43,20 @@ async def health_check():
 
 
 @app.post("/execute")
-async def execute(request: ExecutionRequest):
+async def execute(request: ExecutionRequest) -> ExecutionResponse:
     """Execute code and run tests"""
     logger.info(json.dumps({
-        "event": "execution_started",
+        "event": "request_received",
         "exerciseId": request.exerciseId,
         "language": request.language
     }))
 
-    return ExecutionResponse(
-        passed=True,
-        totalTests=0,
-        passedTests=0,
-        failedTests=0,
-        executionTime=0.0,
-        memory=0,
-        stdout="",
-        stderr="",
-        tests=[]
-    )
+    response = await execute_code(request)
+
+    logger.info(json.dumps({
+        "event": "response_sent",
+        "exerciseId": request.exerciseId,
+        "passed": response.passed
+    }))
+
+    return response
