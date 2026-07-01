@@ -74,26 +74,79 @@ Content-Type: application/json
 }
 ```
 
-**Response:**
+**Response (Success):**
 ```json
 {
   "passed": true,
-  "totalTests": 1,
-  "passedTests": 1,
+  "totalTests": 2,
+  "passedTests": 2,
   "failedTests": 0,
   "executionTime": 0.234,
   "memory": 12.5,
-  "stdout": "",
+  "stdout": "=== test session starts ===\n...",
   "stderr": "",
   "tests": [
     {
       "name": "test_add",
-      "status": "Passed"
+      "status": "Passed",
+      "expected": null,
+      "actual": null,
+      "error": null,
+      "stackTrace": null
+    },
+    {
+      "name": "test_multiply",
+      "status": "Passed",
+      "expected": null,
+      "actual": null,
+      "error": null,
+      "stackTrace": null
     }
   ],
   "error": null
 }
 ```
+
+**Response (With Failures - Human-Readable Error Details):**
+```json
+{
+  "passed": false,
+  "totalTests": 2,
+  "passedTests": 1,
+  "failedTests": 1,
+  "executionTime": 0.456,
+  "memory": 12.5,
+  "stdout": "=== test session starts ===\n...",
+  "stderr": "",
+  "tests": [
+    {
+      "name": "test_add",
+      "status": "Passed",
+      "expected": null,
+      "actual": null,
+      "error": null,
+      "stackTrace": null
+    },
+    {
+      "name": "test_divide",
+      "status": "Failed",
+      "expected": "Infinity",
+      "actual": "ZeroDivisionError",
+      "error": "assert <result> == Infinity",
+      "stackTrace": "where ZeroDivisionError = divide(10, 0)"
+    }
+  ],
+  "error": null
+}
+```
+
+**Note:** For failed tests, each test result includes:
+- `expected` - What the test expected
+- `actual` - What the code returned/error type
+- `error` - The assertion that failed (human-readable)
+- `stackTrace` - Additional context (e.g., which function caused the issue)
+
+These details help novice users understand exactly what went wrong and how to fix it.
 
 **Error Response (422):**
 ```json

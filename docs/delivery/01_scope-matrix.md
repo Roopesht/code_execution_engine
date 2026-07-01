@@ -16,7 +16,7 @@ This is the master scope document for the Local Code Execution Engine delivery. 
 | **4** | Input/Output Examples | Examples | [input-output-examples.md](input-output-examples.md) | ✅ Complete |
 | **5** | Security Spec | Specification | [security-specification.md](security-specification.md) | ✅ Complete |
 | **6** | Setup & Installation | Documentation | [setup.md](setup.md) | ✅ Complete |
-| **7** | Integration Guide | Technical | [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md) | ✅ Complete |
+| **7** | Integration Guide | Technical | [INTEGRATION_GUIDE.md](../../INTEGRATION_GUIDE.md) | ✅ Complete |
 | **8** | Security Configuration | Technical | [SECURITY_CONFIGURATION.md](SECURITY_CONFIGURATION.md) | ✅ Complete |
 
 ---
