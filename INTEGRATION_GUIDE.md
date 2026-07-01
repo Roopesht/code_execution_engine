@@ -14,38 +14,13 @@
 
 ---
 
-## Deployment
+## Setup
 
-### Option 1: Docker (Recommended)
+Before integrating with your website, you need to set up the execution engine on your server.
 
-```bash
-# Clone
-git clone <repo>
-cd code_execution_engine
+**See:** [SETUP_LOCAL_ENGINE.md](SETUP_LOCAL_ENGINE.md) for detailed setup instructions (Docker or Python).
 
-# Setup
-cp .env.example .env
-# Edit .env: change EXECUTOR_API_KEY, CORS_ORIGINS
-
-# Run
-docker build -t code-executor .
-docker run -d \
-  -p 7999:7999 \
-  --env-file .env \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  code-executor
-```
-
-**Important:** Container needs Docker socket to spawn execution containers.
-
-### Option 2: Local Python
-
-```bash
-python3.11 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-EXECUTOR_API_KEY=your_key_here python run.py
-```
+Once set up, the engine will be running at `http://localhost:7999` (or your server address).
 
 ---
 
