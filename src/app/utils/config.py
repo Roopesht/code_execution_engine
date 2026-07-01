@@ -5,6 +5,12 @@ class Config:
     # Required
     API_KEY: str = os.getenv("EXECUTOR_API_KEY")
 
+    # CORS Configuration
+    CORS_ORIGINS: list = [
+        origin.strip()
+        for origin in os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8000").split(",")
+    ]
+
     # Optional (with defaults)
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     EXECUTION_TIMEOUT: int = int(os.getenv("EXECUTION_TIMEOUT", "5"))

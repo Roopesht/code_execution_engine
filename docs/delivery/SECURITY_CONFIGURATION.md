@@ -20,6 +20,20 @@ The execution engine implements multi-layer security to prevent unauthorized acc
 - **Failure Response:** 401 Unauthorized
 - **Implementation:** [src/app/utils/auth.py](../src/app/utils/auth.py)
 
+### API Key Strength Requirements
+**Both development and production enforce minimum security standards:**
+- **Minimum length:** 32 characters
+- **Required:** Mix of letters AND numbers
+- **Startup validation:** Weak keys trigger a warning but still run (allows dev work)
+- **Development example:** `dev_key_12345678901234567890CHANGE_IN_PROD`
+- **Production requirement:** 64+ characters with mixed case, numbers, and symbols
+
+**Warning message on weak keys:**
+```
+⚠️  API key is weak (min 32 chars, mix of letters+numbers). 
+This works for development but MUST be changed in production.
+```
+
 ### Health Check Exception
 - **Endpoint:** `GET /health`
 - **Authentication:** Not required
@@ -200,14 +214,29 @@ PORT=7999                  # Port
 
 ## Deployment Recommendations
 
-1. **Change CORS origins** from localhost to your domain
-2. **Use strong API key** (64+ characters, random)
-3. **Rotate API key** regularly
-4. **Monitor logs** for unauthorized access attempts
-5. **Keep Docker updated** for security patches
-6. **Run with least privilege** user account
-7. **Enable HTTPS** in production (add reverse proxy)
-8. **Rate limit** API calls (future enhancement)
+1. **Generate production API key:**
+   ```bash
+   python3 -c "import secrets; print(secrets.token_urlsafe(64))"
+   ```
+
+2. **Change CORS origins** from localhost to your domain
+
+3. **Validate API key meets requirements:**
+   - At least 64 characters
+   - Mix of upper/lowercase letters, numbers, symbols
+   - No repeated patterns
+
+4. **Rotate API key** every 90 days
+
+5. **Monitor logs** for unauthorized access attempts (401 errors)
+
+6. **Keep Docker updated** for security patches
+
+7. **Run with least privilege** user account
+
+8. **Enable HTTPS** in production (add reverse proxy)
+
+9. **Rate limit** API calls (future enhancement)
 
 ---
 

@@ -9,8 +9,8 @@ import asyncio
 from fastapi.testclient import TestClient
 from pathlib import Path
 
-# Setup environment
-os.environ["EXECUTOR_API_KEY"] = "test_key"
+# Setup environment - matches .env dev key
+os.environ["EXECUTOR_API_KEY"] = "dev_key_12345678901234567890CHANGE_IN_PROD"
 
 from src.app.main import app
 
@@ -39,7 +39,7 @@ def test_add():
                 "code": code,
                 "tests": tests
             },
-            headers={"X-API-Key": "test_key"}
+            headers={"X-API-Key": "dev_key_12345678901234567890CHANGE_IN_PROD"}
         )
 
         assert response.status_code == 200
@@ -75,7 +75,7 @@ def test_negative():
                 "code": code,
                 "tests": tests
             },
-            headers={"X-API-Key": "test_key"}
+            headers={"X-API-Key": "dev_key_12345678901234567890CHANGE_IN_PROD"}
         )
 
         assert response.status_code == 200
@@ -110,7 +110,7 @@ def test_zero():
                 "code": code,
                 "tests": tests
             },
-            headers={"X-API-Key": "test_key"}
+            headers={"X-API-Key": "dev_key_12345678901234567890CHANGE_IN_PROD"}
         )
 
         assert response.status_code == 200
@@ -140,7 +140,7 @@ def test_import():
                 "code": code,
                 "tests": tests
             },
-            headers={"X-API-Key": "test_key"}
+            headers={"X-API-Key": "dev_key_12345678901234567890CHANGE_IN_PROD"}
         )
 
         assert response.status_code == 200
@@ -169,7 +169,7 @@ def test_dummy():
                 "code": code,
                 "tests": tests
             },
-            headers={"X-API-Key": "test_key"}
+            headers={"X-API-Key": "dev_key_12345678901234567890CHANGE_IN_PROD"}
         )
 
         assert response.status_code == 200
@@ -199,7 +199,7 @@ def test_division():
                 "code": code,
                 "tests": tests
             },
-            headers={"X-API-Key": "test_key"}
+            headers={"X-API-Key": "dev_key_12345678901234567890CHANGE_IN_PROD"}
         )
 
         assert response.status_code == 200
@@ -257,7 +257,7 @@ class TestValidation:
                 "code": "def f(): pass",
                 "tests": "def t(): pass"
             },
-            headers={"X-API-Key": "test_key"}
+            headers={"X-API-Key": "dev_key_12345678901234567890CHANGE_IN_PROD"}
         )
         assert response.status_code == 422
 
@@ -270,7 +270,7 @@ class TestValidation:
                 "exerciseId": "test_no_code",
                 "tests": "def t(): pass"
             },
-            headers={"X-API-Key": "test_key"}
+            headers={"X-API-Key": "dev_key_12345678901234567890CHANGE_IN_PROD"}
         )
         assert response.status_code == 422
 
@@ -283,7 +283,7 @@ class TestValidation:
                 "exerciseId": "test_no_tests",
                 "code": "def f(): pass"
             },
-            headers={"X-API-Key": "test_key"}
+            headers={"X-API-Key": "dev_key_12345678901234567890CHANGE_IN_PROD"}
         )
         assert response.status_code == 422
 
@@ -297,7 +297,7 @@ class TestValidation:
                 "code": "def f(): pass",
                 "tests": "def t(): pass"
             },
-            headers={"X-API-Key": "test_key"}
+            headers={"X-API-Key": "dev_key_12345678901234567890CHANGE_IN_PROD"}
         )
         assert response.status_code == 422
 
@@ -323,7 +323,7 @@ def test_f():
                 "code": code,
                 "tests": tests
             },
-            headers={"X-API-Key": "test_key"}
+            headers={"X-API-Key": "dev_key_12345678901234567890CHANGE_IN_PROD"}
         )
 
         data = response.json()
@@ -363,7 +363,7 @@ def test_add():
                 "code": code,
                 "tests": tests
             },
-            headers={"X-API-Key": "test_key"}
+            headers={"X-API-Key": "dev_key_12345678901234567890CHANGE_IN_PROD"}
         )
 
         data = response.json()
@@ -392,7 +392,7 @@ def t():
                 "code": code,
                 "tests": tests
             },
-            headers={"X-API-Key": "test_key"}
+            headers={"X-API-Key": "dev_key_12345678901234567890CHANGE_IN_PROD"}
         )
 
         data = response.json()
@@ -422,7 +422,7 @@ def t():
                 "code": code,
                 "tests": tests
             },
-            headers={"X-API-Key": "test_key"}
+            headers={"X-API-Key": "dev_key_12345678901234567890CHANGE_IN_PROD"}
         )
 
         assert response.status_code == 200
@@ -444,7 +444,7 @@ def t():
                 "code": code,
                 "tests": tests
             },
-            headers={"X-API-Key": "test_key"}
+            headers={"X-API-Key": "dev_key_12345678901234567890CHANGE_IN_PROD"}
         )
 
         assert response.status_code == 200
@@ -473,7 +473,7 @@ def test_greet():
                 "code": code,
                 "tests": tests
             },
-            headers={"X-API-Key": "test_key"}
+            headers={"X-API-Key": "dev_key_12345678901234567890CHANGE_IN_PROD"}
         )
 
         data = response.json()
@@ -503,7 +503,7 @@ def t():
                 "code": code,
                 "tests": tests
             },
-            headers={"X-API-Key": "test_key"}
+            headers={"X-API-Key": "dev_key_12345678901234567890CHANGE_IN_PROD"}
         )
 
         data = response.json()
@@ -533,7 +533,7 @@ def test_divide():
                 "code": code,
                 "tests": tests
             },
-            headers={"X-API-Key": "test_key"}
+            headers={"X-API-Key": "dev_key_12345678901234567890CHANGE_IN_PROD"}
         )
 
         data = response.json()
