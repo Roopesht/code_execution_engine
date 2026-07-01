@@ -8,6 +8,7 @@ from pathlib import Path
 from ..base import BaseExecutor
 from ...utils.docker_client import DockerExecutor, docker_execution_lock
 from ...utils.logger import get_logger
+from ...utils.error_formatter import ErrorFormatter
 
 logger = get_logger(__name__)
 
@@ -240,36 +241,18 @@ class PythonExecutor(BaseExecutor):
         }
 
     def _extract_error(self, logs: str) -> dict | None:
-        """Extract syntax/import errors from pytest output"""
+        """Extract syntax/import errors from pytest output using ErrorFormatter"""
         if "SyntaxError" in logs:
-            lines = logs.split("\n")
-            for i, line in enumerate(lines):
-                if "SyntaxError" in line:
-                    return {
-                        "type": "SyntaxError",
-                        "message": line.strip(),
-                        "line": None
-                    }
+            return ErrorFormatter.format_syntax_error(logs)
 
         if "ImportError" in logs or "ModuleNotFoundError" in logs:
-            lines = logs.split("\n")
-            for i, line in enumerate(lines):
-                if "Error" in line and ("import" in line.lower() or "module" in line.lower()):
-                    return {
-                        "type": "ImportError",
-                        "message": line.strip(),
-                        "line": None
-                    }
+            return ErrorFormatter.format_import_error(logs)
 
         if "ERRORS" in logs or "ERROR" in logs:
-            lines = logs.split("\n")
-            for i, line in enumerate(lines):
-                if "ERROR" in line and "test" in line.lower():
-                    return {
-                        "type": "ExecutionError",
-                        "message": line.strip(),
-                        "line": None
-                    }
+            # Try to detect timeout
+            if "timeout" in logs.lower() or "exceeded" in logs.lower():
+                return ErrorFormatter.format_timeout_error()
+            return ErrorFormatter.format_docker_error(logs)
 
         return None
 

@@ -23,6 +23,7 @@ class ErrorInfo(BaseModel):
     type: str
     message: str
     line: Optional[int] = None
+    hint: Optional[str] = None
     stackTrace: Optional[str] = None
 
 

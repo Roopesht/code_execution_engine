@@ -451,16 +451,46 @@ def t():
 
 
 class TestErrorMessages:
-    """Test error message quality"""
+    """Test error message quality for novice users"""
 
-    def test_error_message_on_import_failure(self):
-        """Error message should be provided on import failure"""
+    def test_syntax_error_includes_hint(self):
+        """Syntax error should include helpful hint"""
+        code = """
+def greet(name)
+    print(f'Hello {name}')
+"""
+        tests = """
+from user_code import greet
+
+def test_greet():
+    pass
+"""
+        response = client.post(
+            "/execute",
+            json={
+                "language": "python",
+                "exerciseId": "test_syntax_hint",
+                "code": code,
+                "tests": tests
+            },
+            headers={"X-API-Key": "test_key"}
+        )
+
+        data = response.json()
+        assert data["passed"] == False
+        if data["error"]:
+            assert data["error"]["type"] == "SyntaxError"
+            assert "hint" in data["error"]
+            assert data["error"]["hint"] is not None
+
+    def test_import_error_includes_hint(self):
+        """Import error should include helpful hint"""
         code = """
 def f():
     pass
 """
         tests = """
-from missing import module
+from missing_module import something
 
 def t():
     pass
@@ -469,7 +499,7 @@ def t():
             "/execute",
             json={
                 "language": "python",
-                "exerciseId": "test_error_msg",
+                "exerciseId": "test_import_hint",
                 "code": code,
                 "tests": tests
             },
@@ -477,10 +507,39 @@ def t():
         )
 
         data = response.json()
+        assert data["passed"] == False
         if data["error"]:
-            assert "message" in data["error"]
-            assert isinstance(data["error"]["message"], str)
-            assert len(data["error"]["message"]) > 0
+            assert data["error"]["type"] == "ImportError"
+            assert "hint" in data["error"]
+            assert "installed" in data["error"]["hint"].lower() or "spelled" in data["error"]["hint"].lower()
+
+    def test_runtime_error_includes_hint(self):
+        """Runtime error should include helpful hint"""
+        code = """
+def divide(a, b):
+    return a / b
+"""
+        tests = """
+from user_code import divide
+
+def test_divide():
+    divide(10, 0)
+"""
+        response = client.post(
+            "/execute",
+            json={
+                "language": "python",
+                "exerciseId": "test_runtime_hint",
+                "code": code,
+                "tests": tests
+            },
+            headers={"X-API-Key": "test_key"}
+        )
+
+        data = response.json()
+        assert data["passed"] == False
+        if data["error"]:
+            assert "hint" in data["error"]
 
 
 if __name__ == "__main__":
