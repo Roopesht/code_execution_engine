@@ -7,12 +7,6 @@ services:
     networks:
       - execution-network
 
-  executor-javascript:
-    image: executor-javascript:latest
-    container_name: executor-javascript
-    networks:
-      - execution-network
-
   code-executor:
     build: .
     container_name: code-executor
@@ -33,7 +27,6 @@ services:
       - execution-network
     depends_on:
       - executor-python
-      - executor-javascript
     restart: unless-stopped
 
 networks:
