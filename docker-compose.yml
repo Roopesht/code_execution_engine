@@ -2,6 +2,9 @@ version: '3.8'
 
 services:
   executor-python:
+    build:
+      context: .
+      dockerfile: src/docker/python/Dockerfile
     image: executor-python:latest
     container_name: executor-python
     networks:
