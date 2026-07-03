@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  executor-python:
+    image: executor-python:latest
+    container_name: executor-python
+    networks:
+      - execution-network
+
+  executor-javascript:
+    image: executor-javascript:latest
+    container_name: executor-javascript
+    networks:
+      - execution-network
+
+  code-executor:
+    build: .
+    container_name: code-executor
+    ports:
+      - "7999:7999"
+    environment:
+      - EXECUTOR_API_KEY=${EXECUTOR_API_KEY:-dev_key_12345678901234567890CHANGE_IN_PROD}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8000}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - EXECUTION_TIMEOUT=${EXECUTION_TIMEOUT:-5}
+      - CONTAINER_MEMORY_MB=${CONTAINER_MEMORY_MB:-512}
+      - CONTAINER_CPU_LIMIT=${CONTAINER_CPU_LIMIT:-0.5}
+      - HOST=${HOST:-0.0.0.0}
+      - PORT=${PORT:-7999}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - execution-network
+    depends_on:
+      - executor-python
+      - executor-javascript
+    restart: unless-stopped
+
+networks:
+  execution-network:
+    driver: bridge
