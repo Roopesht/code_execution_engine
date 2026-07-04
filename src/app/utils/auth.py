@@ -31,7 +31,12 @@ if not validate_api_key_strength(EXECUTOR_API_KEY):
 
 async def validate_api_key(request: Request) -> None:
     """Validate X-API-Key header"""
+    # Skip validation for health check endpoint
     if request.url.path == "/health":
+        return
+
+    # Skip validation for CORS preflight requests (OPTIONS method)
+    if request.method == "OPTIONS":
         return
 
     api_key = request.headers.get("X-API-Key")

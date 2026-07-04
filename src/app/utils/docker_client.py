@@ -1,7 +1,8 @@
-import docker
 import os
 import uuid
 import asyncio
+import subprocess
+import shutil
 from asyncio import Lock
 
 docker_execution_lock = Lock()
@@ -9,7 +10,7 @@ docker_execution_lock = Lock()
 
 class DockerExecutor:
     def __init__(self):
-        self.client = docker.from_env()
+        pass
 
     async def create_workspace(self) -> str:
         """Create temp workspace, return path"""
@@ -19,30 +20,27 @@ class DockerExecutor:
         return workspace_path
 
     async def run_container(self, image: str, workspace: str, command: str, timeout: int = 5):
-        """Run code in container with resource limits"""
+        """Run code directly using subprocess with timeout"""
         loop = asyncio.get_event_loop()
 
         async with docker_execution_lock:
-            container = await loop.run_in_executor(
+            result = await loop.run_in_executor(
                 None,
-                lambda: self.client.containers.run(
-                    image,
+                lambda: subprocess.run(
                     command,
-                    volumes={workspace: {"bind": "/workspace", "mode": "rw"}},
-                    mem_limit="512m",
-                    nano_cpus=int(0.5 * 1e9),
-                    network_disabled=True,
-                    remove=False,
-                    stdout=True,
-                    stderr=True
+                    shell=True,
+                    cwd=workspace,
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout
                 )
             )
-            return container
+            return result
 
     async def cleanup_workspace(self, workspace: str):
         """Remove workspace directory"""
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(
             None,
-            lambda: __import__('shutil').rmtree(workspace, ignore_errors=True)
+            lambda: shutil.rmtree(workspace, ignore_errors=True)
         )

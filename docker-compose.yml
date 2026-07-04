@@ -1,13 +1,4 @@
 services:
-  executor-python:
-    build:
-      context: .
-      dockerfile: src/docker/python/Dockerfile
-    image: executor-python:latest
-    container_name: executor-python
-    networks:
-      - execution-network
-
   code-executor:
     build: .
     container_name: code-executor
@@ -18,19 +9,6 @@ services:
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8000}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - EXECUTION_TIMEOUT=${EXECUTION_TIMEOUT:-5}
-      - CONTAINER_MEMORY_MB=${CONTAINER_MEMORY_MB:-512}
-      - CONTAINER_CPU_LIMIT=${CONTAINER_CPU_LIMIT:-0.5}
       - HOST=${HOST:-0.0.0.0}
       - PORT=${PORT:-7999}
-      - DOCKER_HOST=unix:///var/run/docker.sock
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    networks:
-      - execution-network
-    depends_on:
-      - executor-python
     restart: unless-stopped
-
-networks:
-  execution-network:
-    driver: bridge

@@ -3,6 +3,7 @@ import uuid
 import json
 import shutil
 import asyncio
+import subprocess
 import time
 from pathlib import Path
 from ..base import BaseExecutor
@@ -48,69 +49,55 @@ class PythonExecutor(BaseExecutor):
             raise
 
     async def execute(self, workspace: str) -> dict:
-        """Execute code in Docker container using pytest"""
+        """Execute code using pytest via subprocess"""
         start_time = time.time()
-        container = None
-        logs = None
         loop = asyncio.get_event_loop()
 
         try:
-            # Run pytest in container (detach to get container object)
-            async with docker_execution_lock:
-                container = await loop.run_in_executor(
-                    None,
-                    lambda: self.docker.client.containers.run(
-                        "executor-python:latest",
-                        "pytest /workspace/test_solution.py -v --tb=short",
-                        volumes={workspace: {"bind": "/workspace", "mode": "rw"}},
-                        mem_limit="512m",
-                        nano_cpus=int(0.5 * 1e9),
-                        network_disabled=True,
-                        remove=False,
-                        detach=True
-                    )
-                )
-
-            # Wait for container to finish
-            await loop.run_in_executor(
-                None,
-                lambda: container.wait()
+            # Run pytest in workspace with timeout
+            result = await self.docker.run_container(
+                image=None,  # Not used with subprocess approach
+                workspace=workspace,
+                command="pytest test_solution.py -v --tb=short",
+                timeout=5
             )
 
             execution_time = time.time() - start_time
-
-            # Get container logs
-            logs = await loop.run_in_executor(
-                None,
-                lambda: container.logs(stream=False).decode("utf-8", errors="replace")
-            )
+            logs = result.stdout + result.stderr
 
             logger.info(json.dumps({
                 "event": "python_execution_complete",
                 "workspace": workspace,
-                "execution_time": execution_time
+                "execution_time": execution_time,
+                "return_code": result.returncode
             }))
 
             return {
                 "workspace": workspace,
-                "container": container,
                 "logs": logs,
                 "execution_time": execution_time
             }
 
+        except subprocess.TimeoutExpired as e:
+            execution_time = time.time() - start_time
+            logger.error(json.dumps({
+                "event": "python_execution_timeout",
+                "workspace": workspace,
+                "execution_time": execution_time,
+                "error": str(e)
+            }))
+            raise
+
         except Exception as e:
+            execution_time = time.time() - start_time
             logger.error(json.dumps({
                 "event": "python_execution_failed",
                 "error": str(e),
-                "workspace": workspace
+                "error_type": type(e).__name__,
+                "workspace": workspace,
+                "execution_time": execution_time
             }))
             raise
-        finally:
-            if container:
-                try:
-                    await loop.run_in_executor(None, lambda: container.remove(force=True))
-                except:
-                    pass
 
     async def collect_results(self, workspace: str, logs: str) -> dict:
         """Collect execution results from pytest output"""
