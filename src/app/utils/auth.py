@@ -43,5 +43,5 @@ async def validate_api_key(request: Request) -> None:
     if not api_key or api_key != EXECUTOR_API_KEY:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Unauthorized"
+            detail="Invalid or missing API key"
         )

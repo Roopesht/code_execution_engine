@@ -25,17 +25,18 @@ class PythonExecutor(BaseExecutor):
         workspace = await self.docker.create_workspace()
 
         try:
-            # Write user code
-            code_path = Path(workspace) / "user_code.py"
-            code_path.write_text(code, encoding="utf-8")
+            # Combine user code and tests into one file for pytest to discover tests
+            # Tests need access to the user's functions/classes
+            combined_code = code + "\n\n" + tests
 
-            # Write test code
+            # Write combined code + tests to test file
             test_path = Path(workspace) / "test_solution.py"
-            test_path.write_text(tests, encoding="utf-8")
+            test_path.write_text(combined_code, encoding="utf-8")
 
             logger.info(json.dumps({
                 "event": "python_workspace_prepared",
-                "workspace": workspace
+                "workspace": workspace,
+                "combined_code_length": len(combined_code)
             }))
 
             return workspace
@@ -55,10 +56,11 @@ class PythonExecutor(BaseExecutor):
 
         try:
             # Run pytest in workspace with timeout
+            # Use python -m pytest for more reliable pytest discovery
             result = await self.docker.run_container(
                 image=None,  # Not used with subprocess approach
                 workspace=workspace,
-                command="pytest test_solution.py -v --tb=short",
+                command="python -m pytest test_solution.py -v --tb=short",
                 timeout=5
             )
 
@@ -69,7 +71,9 @@ class PythonExecutor(BaseExecutor):
                 "event": "python_execution_complete",
                 "workspace": workspace,
                 "execution_time": execution_time,
-                "return_code": result.returncode
+                "return_code": result.returncode,
+                "stdout_preview": logs[:500] if logs else "NO OUTPUT",
+                "stdout_length": len(logs) if logs else 0
             }))
 
             return {
@@ -162,11 +166,11 @@ class PythonExecutor(BaseExecutor):
         # First pass: collect test results
         test_map = {}
         for line in lines:
-            # Match test result lines: "test_solution.py::test_name PASSED/FAILED"
-            test_match = re.search(r'(test_\w+\.py)::(test_\w+)\s+(PASSED|FAILED)', line)
+            # Match test result lines: "test_solution.py::ClassName::test_name PASSED/FAILED"
+            test_match = re.search(r'test_solution\.py::(?:\w+::)?(test_\w+)\s+(PASSED|FAILED)', line)
             if test_match:
-                test_name = test_match.group(2)
-                status = "Passed" if test_match.group(3) == "PASSED" else "Failed"
+                test_name = test_match.group(1)
+                status = "Passed" if test_match.group(2) == "PASSED" else "Failed"
                 test_map[test_name] = {
                     "name": test_name,
                     "status": status,

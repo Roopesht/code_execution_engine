@@ -8,7 +8,7 @@ class Config:
     # CORS Configuration
     CORS_ORIGINS: list = [
         origin.strip()
-        for origin in os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8000").split(",")
+        for origin in os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8000,https://tests.ojasamirai.com").split(",")
     ]
 
     # Optional (with defaults)
@@ -18,6 +18,7 @@ class Config:
     CONTAINER_CPU_LIMIT: float = float(os.getenv("CONTAINER_CPU_LIMIT", "0.5"))
     HOST: str = os.getenv("HOST", "0.0.0.0")
     PORT: int = int(os.getenv("PORT", "7999"))
+    HTTPS_PORT: int = int(os.getenv("HTTPS_PORT", "7998"))
 
     @classmethod
     def validate(cls):

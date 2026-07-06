@@ -216,3 +216,9 @@ sudo usermod -aG docker $USER
 3. 🔒 See [docs/delivery/SECURITY_CONFIGURATION.md](docs/delivery/SECURITY_CONFIGURATION.md) for security
 
 ---
+
+
+docker compose down
+docker compose up -d --build
+
+docker compose logs -f

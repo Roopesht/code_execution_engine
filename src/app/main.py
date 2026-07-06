@@ -20,19 +20,29 @@ app = FastAPI(
 
 logger = get_logger(__name__)
 
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=Config.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Content-Type", "X-API-Key"],
-)
+@app.middleware("http")
+async def api_key_middleware(request, call_next):
+    """Validate API key for all endpoints except /health and CORS preflight"""
+    # Skip validation for CORS preflight requests
+    if request.method == "OPTIONS":
+        return await call_next(request)
 
+    try:
+        await validate_api_key(request)
+    except Exception:
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "Unauthorized"}
+        )
+    return await call_next(request)
 
 @app.middleware("http")
 async def request_logging_middleware(request, call_next):
     """Log all HTTP requests and responses"""
+    # Skip middleware for CORS preflight
+    if request.method == "OPTIONS":
+        return await call_next(request)
+
     start_time = time.time()
     request_id = request.headers.get("X-Request-ID", "unknown")
 
@@ -63,19 +73,14 @@ async def request_logging_middleware(request, call_next):
 
     return response
 
-
-@app.middleware("http")
-async def api_key_middleware(request, call_next):
-    """Validate API key for all endpoints except /health"""
-    try:
-        await validate_api_key(request)
-    except Exception as e:
-        return JSONResponse(
-            status_code=401,
-            content={"detail": "Unauthorized"}
-        )
-    return await call_next(request)
-
+# Add CORS middleware (must be added last so it runs first)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=Config.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "X-API-Key"],
+)
 
 @app.get("/health")
 async def health_check():
@@ -85,7 +90,6 @@ async def health_check():
         "status": "running"
     }))
     return {"status": "running"}
-
 
 @app.post("/execute")
 async def execute(request: ExecutionRequest) -> ExecutionResponse:

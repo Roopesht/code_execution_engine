@@ -16,10 +16,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY src/ ./src/
-COPY run.py .
+COPY run_dual.py .
 
-# Expose port
-EXPOSE 7999
+# Expose ports (HTTP and HTTPS)
+EXPOSE 7999 7998
 
-# Run application
-CMD ["python", "run.py"]
+# Run both HTTP and HTTPS servers
+CMD ["python", "run_dual.py"]

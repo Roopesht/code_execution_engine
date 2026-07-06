@@ -4,11 +4,16 @@ services:
     container_name: code-executor
     ports:
       - "7999:7999"
+      - "7998:7998"
+    volumes:
+      - ./certs/server-cert.pem:/app/certs/cert.pem:ro
+      - ./certs/server-key.pem:/app/certs/key.pem:ro
     environment:
       - EXECUTOR_API_KEY=${EXECUTOR_API_KEY:-dev_key_12345678901234567890CHANGE_IN_PROD}
-      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8000}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3006,http://localhost:8000,https://localhost:3000,https://localhost:8000,https://tests.ojasamirai.com}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - EXECUTION_TIMEOUT=${EXECUTION_TIMEOUT:-5}
       - HOST=${HOST:-0.0.0.0}
       - PORT=${PORT:-7999}
+      - HTTPS_PORT=${HTTPS_PORT:-7998}
     restart: unless-stopped
