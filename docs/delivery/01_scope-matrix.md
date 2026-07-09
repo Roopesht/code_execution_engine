@@ -50,6 +50,7 @@ This is the master scope document for the Local Code Execution Engine delivery. 
 |-----|-------|-------------|----------|--------|
 | **3.1** | [Execute Endpoint](stories/3.1_execute_endpoint.md) | Implement POST `/execute` endpoint | High | ✅ Complete |
 | **3.2** | [Error Handling](stories/3.2_error_handling.md) | Comprehensive error handling | High | ✅ Complete |
+| **3.2.1** | [Execute Error Responses](stories/3.2.1_execute_error_responses.md) | Client-facing error responses with proper HTTP status codes | High | ⏳ Not Started |
 | **3.3** | [Logging & Monitoring](stories/3.3_logging_monitoring.md) | Request and execution logging | Medium | ✅ Complete |
 | **3.4** | [Security & Authentication](stories/3.4_security_authentication.md) | API key auth, CORS, input validation | High | ✅ Complete |
 
