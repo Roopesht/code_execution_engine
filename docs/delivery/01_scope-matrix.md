@@ -18,6 +18,8 @@ This is the master scope document for the Local Code Execution Engine delivery. 
 | **6** | Setup & Installation | Documentation | [setup.md](setup.md) | ✅ Complete |
 | **7** | Integration Guide | Technical | [INTEGRATION_GUIDE.md](../../INTEGRATION_GUIDE.md) | ✅ Complete |
 | **8** | Security Configuration | Technical | [SECURITY_CONFIGURATION.md](SECURITY_CONFIGURATION.md) | ✅ Complete |
+| **9** | Open Source Readiness | Checklist | [OPEN_SOURCE_READINESS.md](OPEN_SOURCE_READINESS.md) | ⏳ In Progress |
+| **10** | Certificate Generation | Guide | [CERTIFICATE_GENERATION.md](CERTIFICATE_GENERATION.md) | ✅ Complete |
 
 ---
 
@@ -72,3 +74,9 @@ This is the master scope document for the Local Code Execution Engine delivery. 
 - [x] Phase 3: API Integration (4/4 stories complete)
 - [x] Phase 4: Testing & Documentation (2/2 complete)
 - [ ] Phase 2: JavaScript Executor (0/3 stories)
+
+---
+
+## Open Source Readiness
+
+See [OPEN_SOURCE_READINESS.md](OPEN_SOURCE_READINESS.md) for pre-release requirements and implementation steps.

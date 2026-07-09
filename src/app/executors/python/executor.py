@@ -72,7 +72,7 @@ class PythonExecutor(BaseExecutor):
                 "workspace": workspace,
                 "execution_time": execution_time,
                 "return_code": result.returncode,
-                "stdout_preview": logs[:500] if logs else "NO OUTPUT",
+                "stdout_preview": logs[:5000] if logs else "NO OUTPUT",
                 "stdout_length": len(logs) if logs else 0
             }))
 
