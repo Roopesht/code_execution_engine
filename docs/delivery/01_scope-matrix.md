@@ -20,6 +20,7 @@ This is the master scope document for the Local Code Execution Engine delivery. 
 | **8** | Security Configuration | Technical | [SECURITY_CONFIGURATION.md](SECURITY_CONFIGURATION.md) | ✅ Complete |
 | **9** | Open Source Readiness | Checklist | [OPEN_SOURCE_READINESS.md](OPEN_SOURCE_READINESS.md) | ⏳ In Progress |
 | **10** | Certificate Generation | Guide | [CERTIFICATE_GENERATION.md](CERTIFICATE_GENERATION.md) | ✅ Complete |
+| **11** | Docker Architecture | Analysis | [DOCKER_ARCHITECTURE_ANALYSIS.md](DOCKER_ARCHITECTURE_ANALYSIS.md) | ✅ Complete |
 
 ---
 
@@ -61,6 +62,14 @@ This is the master scope document for the Local Code Execution Engine delivery. 
 | **4.1** | [Integration Tests](stories/4.1_integration_tests.md) | Create integration tests | Medium | ✅ Complete |
 | **4.2** | [Documentation](stories/4.2_documentation.md) | API and setup documentation | Medium | ✅ Complete |
 
+### Phase 5: Future Enhancements
+
+| ID | Story | Description | Priority | Status |
+|-----|-------|-------------|----------|--------|
+| **5.1** | [GitHub Repository Support](stories/5.1_github_repository_support.md) | Execute code from GitHub repos | High | ⏳ Not Started |
+| **5.2** | [Multiple Files Support](stories/5.2_multiple_files_support.md) | Submit and execute multiple files | High | ⏳ Not Started |
+| **5.3** | [Code Snippet Caching](stories/5.3_code_snippet_caching.md) | Save and retrieve last edited snippets | Medium | ⏳ Not Started |
+
 ---
 
 ## Delivery Checklist
@@ -72,9 +81,10 @@ This is the master scope document for the Local Code Execution Engine delivery. 
 - [x] Setup documentation
 - [x] Phase 1: Foundation (3/3 stories complete)
 - [x] Phase 2: Python Executor (3/6 stories complete)
-- [x] Phase 3: API Integration (4/4 stories complete)
+- [x] Phase 3: API Integration (4/5 stories complete - 3.2.1 in progress)
 - [x] Phase 4: Testing & Documentation (2/2 complete)
 - [ ] Phase 2: JavaScript Executor (0/3 stories)
+- [ ] Phase 5: Future Enhancements (0/3 stories)
 
 ---
 

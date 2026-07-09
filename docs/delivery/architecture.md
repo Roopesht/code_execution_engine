@@ -274,22 +274,49 @@ Validation Error
 
 ---
 
+## Docker Architecture: Two-Tier System
+
+### Tier 1: Controller (API Server)
+- **Image:** `code-executor-api` (Dockerfile.api)
+- **Role:** Receives requests, validates input, orchestrates execution
+- **Runtime:** Always running (continuous service)
+- **Responsibility:** HTTP handling, security, response formatting
+
+### Tier 2: Executors (Language-Specific)
+- **Images:** 
+  - `code-executor-python` (Dockerfile.executor.python)
+  - `code-executor-javascript` (Dockerfile.executor.javascript)
+  - `code-executor-react` (Dockerfile.executor.react) - future
+  - `code-executor-react-sandbox` (Dockerfile.executor.react-sandbox) - future
+- **Role:** Execute user code in isolated environment
+- **Runtime:** Spawned per request, destroyed after completion
+- **Responsibility:** Code execution, test running, results collection
+
+**Why Separate?**
+- Each image is optimized for its language
+- Fast startup (minimal dependencies)
+- Easy to scale (spawn N containers)
+- Independent updates (update Python without rebuilding everything)
+- Resource efficient (Python requests don't load Node.js)
+
+---
+
 ## Concurrency Considerations
 
 ### Sequential Execution (v1)
 
 ```
 Request 1 ──────────────────────────┐
-                                    └─> FastAPI Queue ─> Process ─> Response
+                                    └─> FastAPI Queue ─> Spawn Python Container ─> Response
 Request 2 ──────────────────────────┐
-                                    └─> (waits)
+                                    └─> (waits or spawns JS container in parallel)
 Request 3 ──────────────────────────┐
                                     └─> (waits)
 ```
 
 **Current Design:**
 - Sequential processing (one at a time)
-- Each request waits for Docker container to finish
+- Each request spawns a fresh executor container
 - Simple to implement and reason about
 - Suitable for local/single-user scenarios
 
@@ -298,6 +325,7 @@ Request 3 ───────────────────────�
 - Queue-based task distribution
 - Multiple concurrent containers
 - Load balancing across workers
+- Orchestration (Docker Swarm, Kubernetes)
 
 ---
 
