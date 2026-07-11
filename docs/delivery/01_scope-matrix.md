@@ -70,6 +70,14 @@ This is the master scope document for the Local Code Execution Engine delivery. 
 | **5.2** | [Multiple Files Support](stories/5.2_multiple_files_support.md) | Submit and execute multiple files | High | ⏳ Not Started |
 | **5.3** | [Code Snippet Caching](stories/5.3_code_snippet_caching.md) | Save and retrieve last edited snippets | Medium | ⏳ Not Started |
 
+### Phase 6: AI Features
+
+| ID | Story | Description | Priority | Status |
+|-----|-------|-------------|----------|--------|
+| **6.1** | [Local LLM Docker Setup](stories/6.1_local_llm_docker_setup.md) | Docker with llama.cpp for offline AI feedback | Critical | ⏳ Not Started |
+| **6.2** | [LLM Model Management](stories/6.2_llm_model_management.md) | Auto-update models, model switching, versioning | High | ⏳ Not Started |
+| **6.3** | [LLM Advanced Features](stories/6.3_llm_advanced_features.md) | Prompt caching, streaming, benchmarking | Medium | ⏳ Not Started |
+
 ---
 
 ## Delivery Checklist
@@ -85,6 +93,7 @@ This is the master scope document for the Local Code Execution Engine delivery. 
 - [x] Phase 4: Testing & Documentation (2/2 complete)
 - [ ] Phase 2: JavaScript Executor (0/3 stories)
 - [ ] Phase 5: Future Enhancements (0/3 stories)
+- [ ] Phase 6: AI Features (0/3 stories)
 
 ---
 
