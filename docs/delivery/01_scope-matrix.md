@@ -75,6 +75,7 @@ This is the master scope document for the Local Code Execution Engine delivery. 
 | ID | Story | Description | Priority | Status |
 |-----|-------|-------------|----------|--------|
 | **6.1** | [Local LLM Docker Setup](stories/6.1_local_llm_docker_setup.md) | Docker with llama.cpp for offline AI feedback | Critical | ⏳ Not Started |
+| **6.4** | [Feedback Endpoint](stories/6.4_feedback_endpoint.md) | POST /feedback endpoint leveraging LLM service API | High | ⏳ Not Started |
 | **6.2** | [LLM Model Management](stories/6.2_llm_model_management.md) | Auto-update models, model switching, versioning | High | ⏳ Not Started |
 | **6.3** | [LLM Advanced Features](stories/6.3_llm_advanced_features.md) | Prompt caching, streaming, benchmarking | Medium | ⏳ Not Started |
 
