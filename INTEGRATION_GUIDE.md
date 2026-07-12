@@ -176,10 +176,10 @@ const executeCode = async (code, tests) => {
 };
 ```
 
-### JavaScript/React - Get AI Feedback
+### JavaScript/React - Generic Feedback (ChatGPT-style)
 
 ```javascript
-const getFeedback = async (code, failedTests, exerciseId) => {
+const getGenericFeedback = async (prompt, level = 'intermediate') => {
   const response = await fetch('http://localhost:7999/feedback', {
     method: 'POST',
     headers: {
@@ -187,7 +187,34 @@ const getFeedback = async (code, failedTests, exerciseId) => {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      language: 'python',
+      prompt: prompt,
+      language: 'javascript',
+      level: level,  // 'beginner', 'intermediate', 'advanced'
+      max_tokens: 200
+    })
+  });
+  
+  const result = await response.json();
+  console.log('🤖 Response:', result.response);
+  return result;
+};
+
+// Usage: Answer any question
+getGenericFeedback("What's the difference between let and const?", "beginner");
+```
+
+### JavaScript/React - Test-Specific Feedback
+
+```javascript
+const getTestFeedback = async (code, failedTests, exerciseId) => {
+  const response = await fetch('http://localhost:7999/feedback-test', {
+    method: 'POST',
+    headers: {
+      'X-API-Key': 'your_api_key',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      language: 'javascript',
       exerciseId: exerciseId,
       studentCode: code,
       failedTests: failedTests.map(t => ({
@@ -205,7 +232,7 @@ const getFeedback = async (code, failedTests, exerciseId) => {
   }
   
   const result = await response.json();
-  console.log('🤖 AI Feedback:', result.feedback);
+  console.log('🤖 Feedback:', result.feedback);
   console.log(`Tokens used: ${result.tokens.total}`);
   console.log(`Response time: ${result.latency_ms}ms`);
   
@@ -215,7 +242,7 @@ const getFeedback = async (code, failedTests, exerciseId) => {
 // Usage: When tests fail, get feedback
 const result = await executeCode(studentCode, tests);
 if (!result.passed) {
-  const feedback = await getFeedback(
+  const feedback = await getTestFeedback(
     studentCode,
     result.tests.filter(t => t.status === 'Failed'),
     'my_exercise'
@@ -335,14 +362,60 @@ See [SECURITY_CONFIGURATION.md](SECURITY_CONFIGURATION.md) for details.
 
 ---
 
-## AI Feedback Endpoint
+## AI Feedback Endpoints
 
-### Get AI Feedback on Failed Code
+**Story 6.4** provides two AI-powered feedback endpoints:
 
-**Story 6.4** provides an AI-powered feedback endpoint that analyzes failed tests and generates helpful guidance for students.
+### 1. Generic Feedback - ChatGPT-Style API
+
+Ask any question about code, debugging, concepts, etc. Responses adapt to the user's level.
 
 ```
 POST /feedback
+X-API-Key: your_api_key
+Content-Type: application/json
+
+{
+  "prompt": "Explain what a closure is in JavaScript",
+  "language": "javascript",        // optional: python, javascript, react
+  "level": "beginner",             // beginner, intermediate (default), advanced
+  "context": "I'm learning ES6",   // optional: additional context
+  "max_tokens": 150,               // optional: 50-500 (default 150)
+  "temperature": 0.7               // optional: 0-2 (default 0.7)
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "status": "success",
+  "response": "A closure is a function that has access to variables from its outer scope...",
+  "model": "qwen2.5-coder-0.5b",
+  "tokens": {
+    "prompt": 45,
+    "completion": 78,
+    "total": 123
+  },
+  "latency_ms": 850,
+  "generatedAt": "2024-07-09T10:30:00Z"
+}
+```
+
+**Features:**
+- Works with any question or prompt
+- Tailored responses for beginner/intermediate/advanced levels
+- Optional language context for code-specific questions
+- Adjustable creativity (temperature) and response length
+- Full token usage tracking
+
+---
+
+### 2. Test-Specific Feedback - Failed Test Analysis
+
+Analyzes student code that failed tests and provides targeted guidance.
+
+```
+POST /feedback-test
 X-API-Key: your_api_key
 Content-Type: application/json
 
@@ -383,18 +456,7 @@ Content-Type: application/json
 }
 ```
 
-**Error Response (503 - LLM Unavailable):**
-```json
-{
-  "status": "error",
-  "code": "LLM_UNAVAILABLE",
-  "error": "Service Unavailable: LLM service unreachable on port 8001",
-  "details": {"llm_port": 8001, "timeout_seconds": 30}
-}
-```
-
-### Feedback Features
-
+**Features:**
 - **Language-specific prompts**: Python, JavaScript, React each have tailored guidance
 - **Intelligent analysis**: Examines failed tests, compiler errors, and code quality issues
 - **Novice-friendly**: Provides hints without revealing solutions

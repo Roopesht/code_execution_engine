@@ -10,7 +10,24 @@ from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Language-specific system prompts
+# Level-specific guidance templates
+LEVEL_GUIDANCE = {
+    "beginner": "Explain in simple terms a beginner can understand. Use analogies. Avoid jargon.",
+    "intermediate": "Assume the student knows basics. Be concise and technical. Provide relevant examples.",
+    "advanced": "Assume deep knowledge. Get to the point. Suggest advanced techniques and optimizations.",
+}
+
+# Generic system prompt
+GENERIC_SYSTEM_PROMPT = """You are a helpful coding assistant and educator.
+Your task is to answer questions and provide guidance on programming topics.
+
+Guidelines:
+- Provide clear, helpful explanations
+- Use examples when helpful
+- Focus on teaching and learning
+- Suggest best practices when relevant"""
+
+# Language-specific system prompts for test feedback
 SYSTEM_PROMPTS = {
     "python": """You are an experienced Python code reviewer and educator.
 Your task is to provide constructive feedback on student code that has failed tests.
@@ -104,6 +121,131 @@ def build_prompt(
     prompt_parts.append("Please review the code and provide feedback on why the tests are failing and how to fix the issues.")
 
     return "\n".join(prompt_parts)
+
+
+async def get_generic_feedback(
+    prompt: str,
+    language: str = None,
+    level: str = "intermediate",
+    context: str = None,
+    max_tokens_override: int = None,
+    temperature_override: float = None,
+) -> dict:
+    """Call LLM service for generic feedback (ChatGPT-style)"""
+
+    # Configuration
+    llm_url = os.getenv("LLM_SERVICE_URL", "http://llm-server:8001")
+    timeout = int(os.getenv("LLM_SERVICE_TIMEOUT", 30))
+    model = os.getenv("LLM_MODEL", "qwen2.5-coder-0.5b")
+    max_tokens = max_tokens_override or int(os.getenv("LLM_MAX_TOKENS", 150))
+    temperature = temperature_override or float(os.getenv("LLM_TEMPERATURE", 0.7))
+    top_p = float(os.getenv("LLM_TOP_P", 0.9))
+
+    # Build system prompt with level guidance
+    level_hint = LEVEL_GUIDANCE.get(level, LEVEL_GUIDANCE["intermediate"])
+    system_prompt = f"{GENERIC_SYSTEM_PROMPT}\n\nAdapt your answer to this level: {level_hint}"
+
+    if language:
+        system_prompt += f"\nContext: {language} programming"
+
+    # Build user prompt
+    user_prompt = prompt
+    if context:
+        user_prompt = f"{context}\n\n{prompt}"
+
+    logger.info({
+        "event": "generic_feedback_requested",
+        "level": level,
+        "language": language,
+        "prompt_length": len(user_prompt),
+    })
+
+    # Prepare LLM payload
+    payload = {
+        "model": model,
+        "messages": [
+            {
+                "role": "system",
+                "content": system_prompt
+            },
+            {
+                "role": "user",
+                "content": user_prompt
+            }
+        ],
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+        "top_p": top_p
+    }
+
+    start_time = time.time()
+
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            llm_endpoint = f"{llm_url}/v1/chat/completions"
+
+            response = await client.post(llm_endpoint, json=payload)
+            latency_ms = (time.time() - start_time) * 1000
+
+            if response.status_code != 200:
+                logger.error({
+                    "event": "llm_error",
+                    "status_code": response.status_code,
+                    "response": response.text[:500],
+                    "latency_ms": latency_ms,
+                })
+
+                if response.status_code == 503 or response.status_code == 504:
+                    raise LLMUnavailableError(
+                        f"LLM service returned {response.status_code}: {response.text[:100]}"
+                    )
+                else:
+                    raise LLMError(
+                        f"LLM generation failed: {response.text[:200]}"
+                    )
+
+            llm_response = response.json()
+            response_text = llm_response["choices"][0]["message"]["content"]
+            usage = llm_response.get("usage", {})
+
+            logger.info({
+                "event": "generic_feedback_generated",
+                "latency_ms": latency_ms,
+                "prompt_tokens": usage.get("prompt_tokens", 0),
+                "completion_tokens": usage.get("completion_tokens", 0),
+                "response_length": len(response_text),
+            })
+
+            return {
+                "response": response_text,
+                "model": model,
+                "tokens": {
+                    "prompt": usage.get("prompt_tokens", 0),
+                    "completion": usage.get("completion_tokens", 0),
+                    "total": usage.get("total_tokens", 0)
+                },
+                "latency_ms": latency_ms,
+            }
+
+    except httpx.TimeoutException:
+        latency_ms = (time.time() - start_time) * 1000
+        logger.error({
+            "event": "llm_timeout",
+            "timeout": timeout,
+            "latency_ms": latency_ms,
+        })
+        raise LLMTimeoutError(f"LLM request timed out after {timeout} seconds")
+
+    except httpx.ConnectError as e:
+        latency_ms = (time.time() - start_time) * 1000
+        logger.error({
+            "event": "llm_connection_error",
+            "error": str(e),
+            "latency_ms": latency_ms,
+        })
+        raise LLMUnavailableError(
+            f"Could not connect to LLM service at {llm_url}"
+        )
 
 
 async def get_llm_feedback(

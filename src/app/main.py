@@ -1,5 +1,6 @@
 import json
 import time
+from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,9 +8,15 @@ from .utils.logger import get_logger
 from .utils.config import Config
 from .utils.auth import validate_api_key
 from .models import ExecutionRequest, ExecutionResponse
-from .models.feedback import FeedbackRequest, FeedbackResponse, ErrorResponse, ErrorDetail
+from .models.feedback import (
+    FeedbackRequest, FeedbackResponse, ErrorResponse, ErrorDetail,
+    GenericFeedbackRequest, GenericFeedbackResponse, TokenUsage
+)
 from .services.execution import execute_code
-from .services.feedback import get_llm_feedback, FeedbackError, LLMError, LLMUnavailableError, LLMTimeoutError
+from .services.feedback import (
+    get_llm_feedback, get_generic_feedback, FeedbackError, LLMError,
+    LLMUnavailableError, LLMTimeoutError
+)
 
 Config.validate()
 
@@ -114,7 +121,98 @@ async def execute(request: ExecutionRequest) -> ExecutionResponse:
 
 
 @app.post("/feedback")
-async def feedback(request: FeedbackRequest) -> FeedbackResponse:
+async def generic_feedback(request: GenericFeedbackRequest) -> GenericFeedbackResponse:
+    """Generic AI feedback - like ChatGPT API
+
+    Ask any question about code, debugging, concepts, etc.
+    Responses are tailored to the user's level (beginner/intermediate/advanced).
+    """
+
+    logger.info(json.dumps({
+        "event": "generic_feedback_request",
+        "level": request.level,
+        "language": request.language,
+        "prompt_length": len(request.prompt)
+    }))
+
+    try:
+        # Call LLM service for generic feedback
+        result = await get_generic_feedback(
+            prompt=request.prompt,
+            language=request.language,
+            level=request.level,
+            context=request.context,
+            max_tokens_override=request.max_tokens,
+            temperature_override=request.temperature
+        )
+
+        logger.info(json.dumps({
+            "event": "generic_feedback_success",
+            "level": request.level,
+            "latency_ms": result["latency_ms"],
+            "tokens": result["tokens"]["total"]
+        }))
+
+        return GenericFeedbackResponse(
+            status="success",
+            response=result["response"],
+            model=result["model"],
+            tokens=TokenUsage(**result["tokens"]),
+            latency_ms=result["latency_ms"],
+            generatedAt=datetime.utcnow()
+        )
+
+    except LLMTimeoutError as e:
+        logger.error(json.dumps({"event": "feedback_error", "code": e.code, "error": e.message}))
+        raise HTTPException(
+            status_code=504,
+            detail={
+                "status": "error",
+                "code": "LLM_TIMEOUT",
+                "error": "Gateway Timeout: LLM generation did not complete within 30 seconds",
+                "details": {"timeout_seconds": 30}
+            }
+        )
+
+    except LLMUnavailableError as e:
+        logger.error(json.dumps({"event": "feedback_error", "code": e.code, "error": e.message}))
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "status": "error",
+                "code": "LLM_UNAVAILABLE",
+                "error": "Service Unavailable: LLM service unreachable on port 8001",
+                "details": {"llm_port": 8001, "timeout_seconds": 30}
+            }
+        )
+
+    except LLMError as e:
+        logger.error(json.dumps({"event": "feedback_error", "code": e.code, "error": e.message}))
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "status": "error",
+                "code": "LLM_ERROR",
+                "error": "Internal Server Error: LLM generation failed",
+                "details": {"reason": e.message[:100]}
+            }
+        )
+
+    except Exception as e:
+        logger.error(json.dumps({"event": "unexpected_error", "error": str(e), "type": type(e).__name__}))
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "status": "error",
+                "code": "INTERNAL_ERROR",
+                "error": "Internal server error",
+                "details": {}
+            }
+        )
+
+
+@app.post("/feedback-test")
+async def feedback_test(request: FeedbackRequest) -> FeedbackResponse:
     """Get AI feedback on failed code"""
 
     logger.info(json.dumps({
