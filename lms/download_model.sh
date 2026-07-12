@@ -1,18 +1,28 @@
 #!/bin/bash
 
 # Download Qwen2.5-Coder model for local LLM service
-# Tries multiple sources: official Qwen GGUF repos, community GGUF quantizations, or Ollama
-# Usage: bash download_model.sh [1.5b|3b]
+# Supports multiple model sizes: 0.5B (fastest), 1.5B (balanced), 3.0B (best quality)
+# Usage: bash download_model.sh [0.5b|1.5b|3b]
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODELS_DIR="$SCRIPT_DIR/models"
-MODEL_SIZE="${1:-1.5b}"
+MODEL_SIZE="${1:-0.5b}"
 
 mkdir -p "$MODELS_DIR"
 
 case "$MODEL_SIZE" in
+  0.5b)
+    MODEL_NAME="qwen2.5-coder-0.5b"
+    FILENAME="qwen2.5-coder-0.5b-instruct-q8_0.gguf"
+    # Official Qwen GGUF quantizations (note: includes "instruct" in filename)
+    REPOS=(
+      "Qwen/Qwen2.5-Coder-0.5B-Instruct-GGUF"
+    )
+    OLLAMA_MODEL="qwen2.5-coder:0.5b"
+    echo "Selected: 0.5B model (fastest, ~400MB, 512M params)"
+    ;;
   1.5b)
     MODEL_NAME="qwen2.5-coder-1.5b"
     FILENAME="qwen2.5-coder-1.5b-q8_0.gguf"
@@ -24,8 +34,9 @@ case "$MODEL_SIZE" in
       "ggml-org/Qwen2.5-Coder-1.5B-Q4_K_M-GGUF"
     )
     OLLAMA_MODEL="qwen2.5-coder:1.5b"
+    echo "Selected: 1.5B model (balanced, ~1.5GB, 1.5B params)"
     ;;
-  3b)
+  3b|3.0b)
     MODEL_NAME="qwen2.5-coder-3b"
     FILENAME="qwen2.5-coder-3b-q8_0.gguf"
     REPOS=(
@@ -35,11 +46,15 @@ case "$MODEL_SIZE" in
       "ggml-org/Qwen2.5-Coder-3B-Q4_K_M-GGUF"
     )
     OLLAMA_MODEL="qwen2.5-coder:3b"
+    echo "Selected: 3.0B model (best quality, ~3.4GB, 3.0B params)"
     ;;
   *)
-    echo "Usage: $0 [1.5b|3b]"
-    echo "  1.5b - Lightweight model (~1.6GB, requires 4GB RAM)"
-    echo "  3b  - Better quality model (~3.4GB, requires 8GB RAM)"
+    echo "Usage: $0 [0.5b|1.5b|3b]"
+    echo ""
+    echo "Model sizes:"
+    echo "  0.5b - Ultra-fast (~400MB, 512M params, ~1 sec per response)"
+    echo "  1.5b - Balanced (~1.5GB, 1.5B params, ~3-5 sec per response)"
+    echo "  3b  - Best quality (~3.4GB, 3.0B params, ~10-15 sec per response)"
     exit 1
     ;;
 esac
