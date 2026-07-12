@@ -8,7 +8,26 @@ One-command setup for running a local AI model that generates Python code.
 - **Git** (to clone the repository)
 - **4GB RAM minimum**
 
-## Installation
+## Quick Start (Choose Your Platform)
+
+### 🪟 Windows Users
+```bash
+# Just double-click this file:
+quickstart.bat
+
+# Or from PowerShell:
+.\quickstart.bat
+```
+See: [WINDOWS_SETUP.md](WINDOWS_SETUP.md)
+
+### 🐧 Mac & Linux Users
+```bash
+bash quickstart.sh
+```
+
+---
+
+## Manual Installation
 
 ### 1️⃣ Install Docker
 
