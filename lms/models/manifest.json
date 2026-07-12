@@ -1,0 +1,63 @@
+{
+  "defaultModel": "qwen2.5-coder-3b-v2",
+  "availableModels": [
+    "qwen2.5-coder-3b-v2",
+    "qwen2.5-coder-3b-v1",
+    "qwen2.5-coder-1.5b"
+  ],
+  "models": [
+    {
+      "id": "qwen2.5-coder-3b-v2",
+      "version": "2.0",
+      "filename": "qwen2.5-coder-3b-v2.gguf",
+      "size_mb": 3400,
+      "sha256": "placeholder_sha256_hash",
+      "releaseDate": "2024-07-09",
+      "description": "Qwen2.5 Coder 3B, Q4_K_M quantization - Latest, recommended",
+      "parameterCount": 3000000000,
+      "contextSize": 8192,
+      "quantization": "Q4_K_M",
+      "hardware": {
+        "minMemoryMB": 4096,
+        "recommendedMemoryMB": 8192,
+        "supportGPU": true
+      }
+    },
+    {
+      "id": "qwen2.5-coder-1.5b",
+      "version": "1.0",
+      "filename": "qwen2.5-coder-1.5b.gguf",
+      "size_mb": 1600,
+      "sha256": "placeholder_sha256_hash",
+      "releaseDate": "2024-06-15",
+      "description": "Qwen2.5 Coder 1.5B, Q4_K_M quantization - Lightweight, faster",
+      "parameterCount": 1500000000,
+      "contextSize": 4096,
+      "quantization": "Q4_K_M",
+      "hardware": {
+        "minMemoryMB": 2048,
+        "recommendedMemoryMB": 4096,
+        "supportGPU": true
+      }
+    },
+    {
+      "id": "qwen2.5-coder-3b-v1",
+      "version": "1.0",
+      "filename": "qwen2.5-coder-3b-v1.gguf",
+      "size_mb": 3400,
+      "sha256": "placeholder_sha256_hash",
+      "releaseDate": "2024-05-20",
+      "description": "Qwen2.5 Coder 3B v1, Q4_K_M quantization - Older version (deprecated)",
+      "parameterCount": 3000000000,
+      "contextSize": 8192,
+      "quantization": "Q4_K_M",
+      "deprecated": true,
+      "hardware": {
+        "minMemoryMB": 4096,
+        "recommendedMemoryMB": 8192,
+        "supportGPU": true
+      }
+    }
+  ],
+  "lastUpdated": "2024-07-09T10:00:00Z"
+}

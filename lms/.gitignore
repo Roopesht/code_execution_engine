@@ -1,0 +1,30 @@
+# Model files (large, should be downloaded)
+*.gguf
+*.safetensors
+*.bin
+
+# Cache and downloads
+.cache/
+llm_cache/
+llm_logs/
+
+# Runtime logs
+logs/
+*.log
+
+# Environment
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
