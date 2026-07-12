@@ -145,7 +145,7 @@ These details help novice users understand exactly what went wrong and how to fi
 
 ## Integration Examples
 
-### JavaScript/React
+### JavaScript/React - Execute Code
 
 ```javascript
 const executeCode = async (code, tests) => {
@@ -176,7 +176,54 @@ const executeCode = async (code, tests) => {
 };
 ```
 
-### Python
+### JavaScript/React - Get AI Feedback
+
+```javascript
+const getFeedback = async (code, failedTests, exerciseId) => {
+  const response = await fetch('http://localhost:7999/feedback', {
+    method: 'POST',
+    headers: {
+      'X-API-Key': 'your_api_key',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      language: 'python',
+      exerciseId: exerciseId,
+      studentCode: code,
+      failedTests: failedTests.map(t => ({
+        name: t.name,
+        error: t.error,
+        output: t.output
+      }))
+    })
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    console.error(`Error (${response.status}):`, error.error);
+    return null;
+  }
+  
+  const result = await response.json();
+  console.log('🤖 AI Feedback:', result.feedback);
+  console.log(`Tokens used: ${result.tokens.total}`);
+  console.log(`Response time: ${result.latency_ms}ms`);
+  
+  return result;
+};
+
+// Usage: When tests fail, get feedback
+const result = await executeCode(studentCode, tests);
+if (!result.passed) {
+  const feedback = await getFeedback(
+    studentCode,
+    result.tests.filter(t => t.status === 'Failed'),
+    'my_exercise'
+  );
+}
+```
+
+### Python - Execute Code
 
 ```python
 import requests
@@ -195,6 +242,47 @@ response = requests.post(
 result = response.json()
 print(f"Passed: {result['passed']}")
 print(f"Tests: {result['passedTests']}/{result['totalTests']}")
+```
+
+### Python - Get AI Feedback
+
+```python
+import requests
+
+# After execution, if tests failed
+execution_result = requests.post(
+    'http://localhost:7999/execute',
+    headers={'X-API-Key': 'api_key'},
+    json={'language': 'python', 'exerciseId': 'algo-sort', ...}
+).json()
+
+if not execution_result['passed']:
+    # Get AI feedback on failures
+    feedback_response = requests.post(
+        'http://localhost:7999/feedback',
+        headers={'X-API-Key': 'api_key'},
+        json={
+            'language': 'python',
+            'exerciseId': 'algo-sort',
+            'studentCode': student_code,
+            'failedTests': [
+                {
+                    'name': t['name'],
+                    'error': t['error'],
+                    'output': t.get('output')
+                }
+                for t in execution_result['tests']
+                if t['status'] == 'Failed'
+            ]
+        }
+    )
+    
+    if feedback_response.status_code == 200:
+        feedback = feedback_response.json()
+        print(f"🤖 Feedback: {feedback['feedback']}")
+        print(f"Tokens: {feedback['tokens']['total']}")
+    else:
+        print(f"Error: {feedback_response.json()['error']}")
 ```
 
 ---
@@ -247,12 +335,91 @@ See [SECURITY_CONFIGURATION.md](SECURITY_CONFIGURATION.md) for details.
 
 ---
 
+## AI Feedback Endpoint
+
+### Get AI Feedback on Failed Code
+
+**Story 6.4** provides an AI-powered feedback endpoint that analyzes failed tests and generates helpful guidance for students.
+
+```
+POST /feedback
+X-API-Key: your_api_key
+Content-Type: application/json
+
+{
+  "language": "python",              // python, javascript, or react
+  "exerciseId": "exercise_slug",
+  "studentCode": "def add(a, b):\n  return a",
+  "failedTests": [
+    {
+      "name": "test_add",
+      "error": "AssertionError: expected 3, got 1",
+      "output": "..."  // optional test output
+    }
+  ],
+  "compilerErrors": null,            // optional
+  "staticAnalysis": [                // optional
+    "Missing docstring",
+    "No type hints"
+  ],
+  "problemDescription": "Add two numbers",  // optional
+  "hints": ["Check your return statement"]   // optional
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "status": "success",
+  "feedback": "Your add function looks good, but I notice you're only returning `a` instead of adding both parameters. Try returning `a + b` instead.",
+  "model": "qwen2.5-coder-0.5b",
+  "tokens": {
+    "prompt": 156,
+    "completion": 45,
+    "total": 201
+  },
+  "latency_ms": 850,
+  "generatedAt": "2024-07-09T10:30:00Z"
+}
+```
+
+**Error Response (503 - LLM Unavailable):**
+```json
+{
+  "status": "error",
+  "code": "LLM_UNAVAILABLE",
+  "error": "Service Unavailable: LLM service unreachable on port 8001",
+  "details": {"llm_port": 8001, "timeout_seconds": 30}
+}
+```
+
+### Feedback Features
+
+- **Language-specific prompts**: Python, JavaScript, React each have tailored guidance
+- **Intelligent analysis**: Examines failed tests, compiler errors, and code quality issues
+- **Novice-friendly**: Provides hints without revealing solutions
+- **Fast feedback**: Generated in ~500-1000ms (depends on LLM service)
+- **Token tracking**: See prompt/completion token usage
+
+### Error Responses
+
+| Status | Code | Meaning |
+|--------|------|---------|
+| **400** | INVALID_REQUEST | Missing/invalid fields |
+| **401** | UNAUTHORIZED | Invalid API key |
+| **500** | LLM_ERROR | LLM generation failed |
+| **503** | LLM_UNAVAILABLE | LLM service not running |
+| **504** | LLM_TIMEOUT | LLM took too long (>30s) |
+
+---
+
 ## Supported Languages
 
-| Language | Status | Tests | Notes |
-|----------|--------|-------|-------|
-| Python | ✅ Ready | pytest | Full support |
-| JavaScript | 🔄 Planned | jest | Coming soon |
+| Language | Execute | Feedback | Notes |
+|----------|---------|----------|-------|
+| Python | ✅ Ready | ✅ Ready | Full support |
+| JavaScript | ✅ Ready | ✅ Ready | Full support |
+| React | ❌ Planned | ✅ Ready | Feedback only (Story 3.3) |
 
 ---
 
@@ -278,12 +445,154 @@ See [SECURITY_CONFIGURATION.md](SECURITY_CONFIGURATION.md) for details.
 
 ---
 
+## Adding AI Feedback to 3rd Party Sites
+
+### Quick Integration Checklist
+
+For a learning platform or coding IDE that already calls `/execute`, adding AI feedback is just 3 extra lines:
+
+1. **After code execution fails:**
+   ```javascript
+   const execution = await executeCode(studentCode, tests);
+   if (!execution.passed) {
+     const feedback = await getFeedback(studentCode, execution.tests);
+   }
+   ```
+
+2. **Show feedback to student:**
+   ```javascript
+   console.log(feedback.feedback);  // Display AI's guidance
+   ```
+
+3. **That's it!** No LLM setup needed on your end.
+
+### Architecture for 3rd Party Integration
+
+```
+Your Web App
+    ↓
+  [Execute Button]
+    ↓
+  POST /execute (code + tests)
+    ↓
+  Tests fail? → Check result.passed
+    ↓
+  if (!passed) POST /feedback (code + failed tests)
+    ↓
+  Display feedback to student
+```
+
+### Example: Add to Existing Platform
+
+If you're already calling the executor API, this is a minimal addition:
+
+```javascript
+// You already have this:
+const result = await executeCode(code, tests);
+
+// Add this:
+if (!result.passed) {
+  try {
+    const feedback = await fetch('http://executor:7999/feedback', {
+      method: 'POST',
+      headers: {
+        'X-API-Key': API_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        language: 'python',
+        exerciseId: exercise.id,
+        studentCode: code,
+        failedTests: result.tests
+          .filter(t => t.status === 'Failed')
+          .map(t => ({name: t.name, error: t.error}))
+      })
+    }).then(r => r.json());
+    
+    // Display: feedback.feedback
+    showToStudent(feedback.feedback);
+  } catch (e) {
+    console.error('Feedback unavailable:', e);
+    // Graceful degradation - still show test results
+  }
+}
+```
+
+### What Your Users See
+
+**Before (Test Results Only):**
+```
+❌ test_sort failed: expected [1,2,3], got [3,2,1]
+```
+
+**After (With AI Feedback):**
+```
+❌ test_sort failed: expected [1,2,3], got [3,2,1]
+
+🤖 AI Feedback:
+Your sort implementation isn't changing the array order. 
+I notice you're returning `arr` directly without actually 
+sorting it. Try using Python's built-in `sorted()` function 
+and remember to return the result. Here's a hint: 
+`return sorted(arr)` would work for this case.
+```
+
+### Performance Considerations
+
+- **Feedback latency:** 500ms - 1500ms (LLM response time)
+- **Best practice:** Load feedback asynchronously after showing test results
+- **Fallback:** If feedback fails (LLM unavailable), still show execution results
+- **Caching:** Future story (6.2) will add response caching
+
+### Costs
+
+Each feedback request uses LLM tokens:
+- **Prompt tokens:** ~150-400 (depends on code size)
+- **Completion tokens:** ~50-150 (feedback length)
+- **Total per request:** ~200-500 tokens
+
+### Requirements on Your End
+
+- ✅ Call `/execute` first (you already do)
+- ✅ Extract failed tests from response
+- ✅ Send to `/feedback` endpoint
+- ✅ Display `feedback.feedback` to user
+- ✅ Handle errors gracefully (LLM might be down)
+
+### Optional Features
+
+**Track feedback usage:**
+```javascript
+analytics.track('feedback_requested', {
+  language: 'python',
+  exercise_id: 'algo-sort',
+  tokens_used: feedback.tokens.total,
+  latency_ms: feedback.latency_ms
+});
+```
+
+**Show token usage to admin:**
+```javascript
+// For billing/monitoring
+console.log(`Feedback token cost: ${feedback.tokens.total}`);
+```
+
+**Language detection:**
+```javascript
+// Auto-detect from exercise metadata
+const language = exercise.language || 'python';
+```
+
+---
+
 ## Next Steps
 
 1. **Deploy** using Docker or local Python
 2. **Test** with curl or Postman
-3. **Integrate** using code examples above
-4. **Monitor** via logs (JSON format, queryable)
+3. **Integrate** `/execute` first (existing flow)
+4. **Add** `/feedback` endpoint (new AI feature)
+5. **Display** feedback to students
+6. **Monitor** via logs (JSON format, queryable)
 
 See [SECURITY_CONFIGURATION.md](SECURITY_CONFIGURATION.md) for production setup.
 

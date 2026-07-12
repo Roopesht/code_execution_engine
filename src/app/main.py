@@ -1,13 +1,15 @@
 import json
 import time
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from .utils.logger import get_logger
 from .utils.config import Config
 from .utils.auth import validate_api_key
 from .models import ExecutionRequest, ExecutionResponse
+from .models.feedback import FeedbackRequest, FeedbackResponse, ErrorResponse, ErrorDetail
 from .services.execution import execute_code
+from .services.feedback import get_llm_feedback, FeedbackError, LLMError, LLMUnavailableError, LLMTimeoutError
 
 Config.validate()
 
@@ -109,3 +111,108 @@ async def execute(request: ExecutionRequest) -> ExecutionResponse:
     }))
 
     return response
+
+
+@app.post("/feedback")
+async def feedback(request: FeedbackRequest) -> FeedbackResponse:
+    """Get AI feedback on failed code"""
+
+    logger.info(json.dumps({
+        "event": "feedback_request",
+        "exerciseId": request.exerciseId,
+        "language": request.language,
+        "num_failed_tests": len(request.failedTests)
+    }))
+
+    try:
+        # Call LLM service for feedback
+        response = await get_llm_feedback(request)
+
+        logger.info(json.dumps({
+            "event": "feedback_success",
+            "exerciseId": request.exerciseId,
+            "latency_ms": response.latency_ms,
+            "tokens": response.tokens.total
+        }))
+
+        return response
+
+    except LLMTimeoutError as e:
+        logger.error(json.dumps({
+            "event": "feedback_error",
+            "code": e.code,
+            "error": e.message
+        }))
+        raise HTTPException(
+            status_code=504,
+            detail={
+                "status": "error",
+                "code": "LLM_TIMEOUT",
+                "error": f"Gateway Timeout: LLM generation did not complete within 30 seconds",
+                "details": {"timeout_seconds": 30}
+            }
+        )
+
+    except LLMUnavailableError as e:
+        logger.error(json.dumps({
+            "event": "feedback_error",
+            "code": e.code,
+            "error": e.message
+        }))
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "status": "error",
+                "code": "LLM_UNAVAILABLE",
+                "error": f"Service Unavailable: LLM service unreachable on port 8001",
+                "details": {"llm_port": 8001, "timeout_seconds": 30}
+            }
+        )
+
+    except LLMError as e:
+        logger.error(json.dumps({
+            "event": "feedback_error",
+            "code": e.code,
+            "error": e.message
+        }))
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "status": "error",
+                "code": "LLM_ERROR",
+                "error": f"Internal Server Error: LLM generation failed",
+                "details": {"reason": e.message[:100]}
+            }
+        )
+
+    except FeedbackError as e:
+        logger.error(json.dumps({
+            "event": "feedback_error",
+            "code": e.code,
+            "error": e.message
+        }))
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "status": "error",
+                "code": e.code,
+                "error": e.message,
+                "details": e.details
+            }
+        )
+
+    except Exception as e:
+        logger.error(json.dumps({
+            "event": "unexpected_error",
+            "error": str(e),
+            "type": type(e).__name__
+        }))
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "status": "error",
+                "code": "INTERNAL_ERROR",
+                "error": "Internal server error",
+                "details": {}
+            }
+        )
