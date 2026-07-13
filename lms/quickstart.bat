@@ -38,30 +38,18 @@ if errorlevel 1 (
 )
 
 REM Download model
-echo Downloading Qwen2.5-Coder 0.5B model (644MB)...
+echo Downloading Qwen2.5-Coder 0.5B model...
 echo This may take a few minutes...
 echo.
-call powershell -NoProfile -ExecutionPolicy Bypass -Command "& {python -c \"from huggingface_hub import hf_hub_download; hf_hub_download('Qwen/Qwen2.5-Coder-0.5B-Instruct-GGUF', 'qwen2.5-coder-0.5b-instruct-q8_0.gguf', cache_dir='models', local_dir='models')\"}"
+call download_model.bat 0.5b
 if errorlevel 1 (
     echo.
-    echo ! Note: Model download via Python failed
-    echo ! Trying alternate method...
+    echo ✗ Model download failed
     echo.
+    pause
+    exit /b 1
 )
-
-REM Create symlink
-cd models
-if not exist active.gguf (
-    REM Create symlink using mklink (Windows command)
-    for %%f in (qwen2.5-coder-0.5b-instruct-q8_0.gguf) do (
-        mklink active.gguf %%f >nul 2>&1
-        if errorlevel 1 (
-            REM If mklink fails, just copy as backup
-            copy qwen2.5-coder-0.5b-instruct-q8_0.gguf active.gguf >nul 2>&1
-        )
-    )
-)
-cd ..
+echo.
 
 echo.
 echo Starting Docker container...
