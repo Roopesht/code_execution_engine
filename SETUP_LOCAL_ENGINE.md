@@ -46,9 +46,10 @@ EXECUTOR_API_KEY=test_key_12345678901234567890
 
 ```bash
 docker build -t code-executor .
-docker run -d -p 7999:7999 --env-file .env \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  --name code-executor code-executor
+```
+
+```bash
+docker run -d -p 7999:7999 --env-file .env   -v /var/run docker.sock:/var/run/docker.sock   --name code-executor code-executor
 ```
 
 ### Done ✅

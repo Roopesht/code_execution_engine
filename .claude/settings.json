@@ -3,7 +3,8 @@
     "allow": [
       "Bash(EXECUTOR_API_KEY=test_key python3)",
       "Bash(python -c ' *)",
-      "Bash(EXECUTOR_API_KEY=\"*\" python -m pytest tests/test_integration.py -q)"
+      "Bash(EXECUTOR_API_KEY=\"*\" python -m pytest tests/test_integration.py -q)",
+      "Bash(bash -n /Users/roopesh/projects/code_execution_engine/lms/local/run_local.sh)"
     ]
   }
 }
