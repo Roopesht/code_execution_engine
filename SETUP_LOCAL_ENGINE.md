@@ -132,14 +132,10 @@ LOG_LEVEL=INFO                   # INFO or DEBUG
 
 ```bash
 docker build -t code-executor .
+```
 
-docker run -d \
-  -p 7998:7998 \
-  --env-file .env \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  --restart=unless-stopped \
-  --name code-executor \
-  code-executor
+```bash
+docker run -d   -p 7998:7998   --env-file .env   -e HOST=0.0.0.0   -e PORT=7999   -e HTTPS_PORT=7998   -v /var/run/docker.sock:/var/run/docker.sock   -v ./certs/server-cert.pem:/app/certs/cert.pem:ro   -v ./certs/server-key.pem:/app/certs/key.pem:ro   --restart=unless-stopped  --name code-executor  code-executor
 ```
 
 ### Step 7: Verify

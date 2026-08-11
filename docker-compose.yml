@@ -12,8 +12,9 @@ services:
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3006,http://localhost:8000,https://localhost:3000,https://localhost:8000,https://tests.ojasamirai.com}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - EXECUTION_TIMEOUT=${EXECUTION_TIMEOUT:-5}
-      - HOST=${HOST:-localhost}
-      - PORT=${PORT:-7998}
+      - HOST=${HOST:-0.0.0.0}
+      - PORT=${PORT:-7999}
+      - HTTPS_PORT=${HTTPS_PORT:-7998}
       # LLM Service Configuration (Story 6.4)
       - LLM_SERVICE_URL=${LLM_SERVICE_URL:-http://host.docker.internal:8001}
       - LLM_SERVICE_TIMEOUT=${LLM_SERVICE_TIMEOUT:-30}
