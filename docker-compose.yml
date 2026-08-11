@@ -3,7 +3,7 @@ services:
     build: .
     container_name: code-executor
     ports:
-      - "7998:7999"
+      - "7998:7998"
     volumes:
       - ./certs/server-cert.pem:/app/certs/cert.pem:ro
       - ./certs/server-key.pem:/app/certs/key.pem:ro
@@ -13,8 +13,7 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - EXECUTION_TIMEOUT=${EXECUTION_TIMEOUT:-5}
       - HOST=${HOST:-localhost}
-      - PORT=${PORT:-7999}
-      - HTTPS_PORT=${HTTPS_PORT:-7998}
+      - PORT=${PORT:-7998}
       # LLM Service Configuration (Story 6.4)
       - LLM_SERVICE_URL=${LLM_SERVICE_URL:-http://host.docker.internal:8001}
       - LLM_SERVICE_TIMEOUT=${LLM_SERVICE_TIMEOUT:-30}

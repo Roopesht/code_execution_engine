@@ -49,16 +49,16 @@ docker build -t code-executor .
 ```
 
 ```bash
-docker run -d -p 7999:7999 --env-file .env   -v /var/run docker.sock:/var/run/docker.sock   --name code-executor code-executor
+docker run -d -p 7998:7998 --env-file .env   -v /var/run docker.sock:/var/run/docker.sock   --name code-executor code-executor
 ```
 
 ### Done ✅
 
-Engine running at: `http://localhost:7999`
+Engine running at: `http://localhost:7998`
 
 Verify:
 ```bash
-curl http://localhost:7999/health
+curl http://localhost:7998/health
 ```
 
 ---
@@ -128,7 +128,7 @@ LOG_LEVEL=INFO                   # INFO or DEBUG
 docker build -t code-executor .
 
 docker run -d \
-  -p 7999:7999 \
+  -p 7998:7998 \
   --env-file .env \
   -v /var/run/docker.sock:/var/run/docker.sock \
   --restart=unless-stopped \
@@ -143,10 +143,10 @@ docker run -d \
 docker ps | grep code-executor
 
 # Health check
-curl http://localhost:7999/health
+curl http://localhost:7998/health
 
 # Test execution
-curl -X POST http://localhost:7999/execute \
+curl -X POST http://localhost:7998/execute \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
