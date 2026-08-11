@@ -42,24 +42,30 @@ EXECUTOR_API_KEY=test_key_12345678901234567890
 
 (Any string with 32+ characters works for learning)
 
-### Step 4: Run Docker
+### Step 4: Run with docker-compose (Easiest)
 
 ```bash
-docker build -t code-executor .
-```
-
-```bash
-docker run -d -p 7998:7998 --env-file .env   -v /var/run docker.sock:/var/run/docker.sock   --name code-executor code-executor
+docker-compose up --build -d
 ```
 
 ### Done ✅
 
-Engine running at: `http://localhost:7998`
+**HTTPS** running at: `https://localhost:7998`
 
-Verify:
+Verify (ignore self-signed cert warning):
 ```bash
-curl http://localhost:7998/health
+curl -k https://localhost:7998/health
 ```
+
+Or open browser: https://localhost:7998/docs (click "Advanced" → "Accept Risk")
+
+### About Certificates
+
+This setup uses **self-signed SSL certificates** for local development:
+- **Public cert:** `./certs/server-cert.pem` ✅ (safe to share with team)
+- **Private key:** `./certs/server-key.pem` ❌ (NEVER share or commit)
+
+The certificate is already included - just works out of the box!
 
 ---
 
@@ -179,14 +185,14 @@ Error: docker: command not found
 ```
 **Solution:** Install Docker Desktop or Docker Engine
 
-### Port 7999 in use
+### Port 7998 in use
 ```
 Error: Address already in use
 ```
 **Solution:** 
 ```bash
-docker stop code-executor
-docker rm code-executor
+docker-compose down
+docker-compose up --build
 ```
 
 ### Health check fails

@@ -18,6 +18,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src/ ./src/
 COPY run_dual.py .
 
+# Create certs directory for volume mount
+RUN mkdir -p /app/certs
+
 # Expose ports (HTTP and HTTPS)
 EXPOSE 7999 7998
 
