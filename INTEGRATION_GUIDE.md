@@ -331,7 +331,7 @@ if not execution_result['passed']:
 - `EXECUTION_TIMEOUT` - 1-30 seconds (default 5)
 - `CONTAINER_MEMORY_MB` - Memory limit (default 512)
 - `CONTAINER_CPU_LIMIT` - CPU cores (default 0.5)
-- `HOST` - Bind address (default 0.0.0.0)
+- `HOST` - Bind address (default localhost)
 - `PORT` - Port (default 7999)
 
 ---

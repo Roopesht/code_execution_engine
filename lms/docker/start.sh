@@ -80,13 +80,13 @@ echo "[$(date)]   Max Tokens: $MAX_TOKENS"
 
 # Start llama.cpp server
 echo "[$(date)] Starting llama-server..."
-echo "[$(date)] Listening on http://0.0.0.0:8001"
+echo "[$(date)] Listening on http://localhost:8001"
 
 cd /app/llama.cpp/build/bin
 
 ./llama-server \
     --model "$MODEL_PATH" \
-    --host 0.0.0.0 \
+    --host localhost \
     --port 8001 \
     --threads $THREADS \
     --ctx-size $CONTEXT \

@@ -188,7 +188,7 @@ LOG_LEVEL=INFO              # Logging verbosity
 EXECUTION_TIMEOUT=5         # Seconds
 CONTAINER_MEMORY_MB=512     # MB
 CONTAINER_CPU_LIMIT=0.5     # CPU cores
-HOST=0.0.0.0               # Bind address
+HOST=localhost              # Bind address
 PORT=7999                  # Port
 ```
 

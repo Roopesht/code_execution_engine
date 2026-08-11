@@ -673,7 +673,7 @@ LLM_TOP_P=0.9
 ```json
 {
   "model": "active.gguf",
-  "host": "0.0.0.0",
+  "host": "localhost",
   "port": 8001,
   "threads": "auto",
   "context_size": 8192,

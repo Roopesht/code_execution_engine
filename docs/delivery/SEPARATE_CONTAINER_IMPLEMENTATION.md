@@ -67,7 +67,7 @@ services:
       - EXECUTOR_LANGUAGE=python
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - EXECUTION_TIMEOUT=${EXECUTION_TIMEOUT:-5}
-      - HOST=0.0.0.0
+      - HOST=localhost
       - PORT=7999
       - HTTPS_PORT=7998
     volumes:
@@ -86,7 +86,7 @@ services:
       - EXECUTOR_LANGUAGE=javascript
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - EXECUTION_TIMEOUT=${EXECUTION_TIMEOUT:-5}
-      - HOST=0.0.0.0
+      - HOST=localhost
       - PORT=7999
       - HTTPS_PORT=7996
     volumes:
@@ -105,7 +105,7 @@ services:
       - EXECUTOR_LANGUAGE=react
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - EXECUTION_TIMEOUT=${EXECUTION_TIMEOUT:-10}
-      - HOST=0.0.0.0
+      - HOST=localhost
       - PORT=7999
       - HTTPS_PORT=7994
     volumes:

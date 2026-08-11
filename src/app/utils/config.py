@@ -16,7 +16,7 @@ class Config:
     EXECUTION_TIMEOUT: int = int(os.getenv("EXECUTION_TIMEOUT", "5"))
     CONTAINER_MEMORY_MB: int = int(os.getenv("CONTAINER_MEMORY_MB", "512"))
     CONTAINER_CPU_LIMIT: float = float(os.getenv("CONTAINER_CPU_LIMIT", "0.5"))
-    HOST: str = os.getenv("HOST", "0.0.0.0")
+    HOST: str = os.getenv("HOST", "localhost")
     PORT: int = int(os.getenv("PORT", "7999"))
     HTTPS_PORT: int = int(os.getenv("HTTPS_PORT", "7998"))
 
