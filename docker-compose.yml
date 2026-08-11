@@ -3,8 +3,7 @@ services:
     build: .
     container_name: code-executor
     ports:
-      - "7999:7999"
-      - "7998:7998"
+      - "7998:7999"
     volumes:
       - ./certs/server-cert.pem:/app/certs/cert.pem:ro
       - ./certs/server-key.pem:/app/certs/key.pem:ro
